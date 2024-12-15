@@ -4,8 +4,8 @@ from typing import List, Dict
 
 # Define the types for the result (similar to your StreamInfo and StreamLink in TypeScript)
 class StreamLink:
-    def __init__(self, class_name: str, url: str):
-        self.class_name = class_name
+    def __init__(self, name: str, url: str):
+        self.name = name
         self.url = url
 
 class StreamInfo:
@@ -25,10 +25,10 @@ def parse_streaming_info(url: str) -> StreamInfo:
     # Extract stream links (class and URL)
     stream_links = []
     for li in soup.select('div.anime_muti_link ul li'):
-        class_name = li.get('class', [None])[0]  # Get the first class name (if exists)
+        name = li.get('class', [None])[0]  # Get the first class name (if exists)
         url = li.find('a', {'data-video': True})  # Find the link with the 'data-video' attribute
-        if class_name and url:
-            stream_links.append(StreamLink(class_name, url.get('data-video')))
+        if name and url:
+            stream_links.append(StreamLink(name, url.get('data-video')))
 
     # Extract anime information
     anime_info = {

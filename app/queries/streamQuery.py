@@ -1,6 +1,7 @@
 STREAM = '''
 query ($id: Int) {
   Media(id: $id) {
+    episodes
     streamingEpisodes {
       title
       thumbnail

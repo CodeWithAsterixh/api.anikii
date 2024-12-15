@@ -1,3 +1,7 @@
 /demo.json
 /venv
 /__pycache__
+/app/routes/__pycache__
+/app/queries/__pycache__
+/app/helpers/__pycache__
+/app/__pycache__

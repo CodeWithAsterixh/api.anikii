@@ -14,6 +14,7 @@ from app.routes import (
     anime_ID_characters,
     anime_ID_recommended,
     anime_ID_stream,
+    anime_ID_stream_EP,
 )
 
 # Initialize the FastAPI application
@@ -35,6 +36,7 @@ routes = [
     anime_ID_characters.router,
     anime_ID_recommended.router,
     anime_ID_stream.router,
+    anime_ID_stream_EP.router,
     
 ]
 

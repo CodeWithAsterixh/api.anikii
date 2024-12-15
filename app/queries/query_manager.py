@@ -9,6 +9,9 @@ from .searchQueries import SEARCH
 from .streamQuery import STREAM
 from .genreItemQuery import GENRE_ITEM
 from .fypQuery import FYP
+from .trailerQuery import TRAILERS
+
+
 
 class QueryManager:
     def __init__(self):
@@ -43,6 +46,9 @@ class QueryManager:
             "fyp": {
                 "get_fyp": FYP,
             },
+            "trailers": {
+                "get_trailers": TRAILERS,
+            }
         }
 
     def get_query(self, category: str, query_name: str) -> str:

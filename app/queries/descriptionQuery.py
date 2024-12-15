@@ -30,6 +30,7 @@ query ($id: Int) {
     trending
     episodes
     updatedAt
+    format
     startDate{
       year
       month

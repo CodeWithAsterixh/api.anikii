@@ -12,11 +12,6 @@ query ($id: Int) {
       url
       type
     }
-    trailer{
-      id
-      site
-      thumbnail
-    }
   }
 }
 '''

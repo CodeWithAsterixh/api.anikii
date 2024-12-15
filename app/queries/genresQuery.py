@@ -1,0 +1,7 @@
+GENRES = '''
+query {
+  GenreCollection
+}
+'''
+
+

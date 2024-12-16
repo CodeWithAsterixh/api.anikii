@@ -21,6 +21,7 @@ query ($page: Int = 1, $season: MediaSeason, $year: Int = 2024) {
       coverImage {
         extraLarge
         medium
+        color
       }
       popularity
       averageScore

@@ -17,6 +17,7 @@ query ($id: Int,$page: Int = 1) {
                 coverImage {
                     extraLarge
                     medium
+                    color
                 }
                 popularity
             }

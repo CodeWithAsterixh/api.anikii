@@ -7,26 +7,27 @@ query ($page: Int = 1) {
     }
     media(popularity_greater: 10000, sort:[TRENDING_DESC, POPULARITY_DESC]) {
             id
-            title {
-                romaji
-                english
-            }
-            status
-            coverImage {
-                extraLarge
-                medium
-                color
-            }
-            popularity
-            averageScore
-            trending
-            isAdult
-            status
-            genres
-            nextAiringEpisode{
-                airingAt,
-                episode
-            }        
+                    title {
+                        romaji
+                        english
+                    }
+                    status
+                    format
+                    coverImage {
+                        extraLarge
+                        medium
+                        color
+                    }
+                    popularity
+                    averageScore
+                    trending
+                    isAdult
+                    status
+                    genres
+                    nextAiringEpisode {
+                        airingAt
+                        episode
+                    }    
     }
   }
 }

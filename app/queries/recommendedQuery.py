@@ -8,18 +8,28 @@ query ($id: Int,$page: Int = 1) {
             }
             nodes {
                 mediaRecommendation {
-                id
-                title {
-                    romaji
-                    english
-                }
-                status
-                coverImage {
-                    extraLarge
-                    medium
-                    color
-                }
-                popularity
+                    id
+                    title {
+                        romaji
+                        english
+                    }
+                    status
+                    format
+                    coverImage {
+                        extraLarge
+                        medium
+                        color
+                    }
+                    popularity
+                    averageScore
+                    trending
+                    isAdult
+                    status
+                    genres
+                    nextAiringEpisode {
+                        airingAt
+                        episode
+                    }
             }
           }
           }

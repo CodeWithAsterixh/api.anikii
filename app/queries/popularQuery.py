@@ -22,6 +22,7 @@ query ($page: Int = 1) {
             trending
             isAdult
             status
+            genres
             nextAiringEpisode{
                 airingAt,
                 episode

@@ -20,13 +20,18 @@ def popular(id:int):
 
         # Make the API request
         response = make_api_request(body)  # Assuming make_api_request returns a response object
-
+        pageInfo = response["data"]["Media"]["characters"]["pageInfo"]
+        characters = response["data"]["Media"]["characters"]["edges"]
+        result = {
+            pageInfo: pageInfo,
+            characters: characters
+        }
         # Check for errors in the response
         if response.get("errors"):
             return {"error": response["errors"]}, 500
 
         # Return the parsed result as JSON
-        return {"result": response["data"]["Media"]}, 200
+        return {"result": result}, 200
 
     except requests.exceptions.RequestException as e:
         # Handle any error with the request

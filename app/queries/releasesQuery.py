@@ -28,6 +28,7 @@ query ($page: Int = 1, $season: MediaSeason, $year: Int = 2024) {
       trending
       isAdult
       status
+      genres
       nextAiringEpisode {
         airingAt
         episode

@@ -27,8 +27,8 @@ def genres_GENRE(fyp_request: FYPRequest):
             })
             
             # Validate response structure
-            if not main_res.get("data") or not main_res["data"].get("Media"):
-                raise HTTPException(status_code=500, detail=f"Invalid response structure for ID: {fyid}")
+            if main_res.get("errors"):
+                raise HTTPException(status_code=500, detail=main_res["errors"])
             
             # Extract recommendations
             media_recommendations = [

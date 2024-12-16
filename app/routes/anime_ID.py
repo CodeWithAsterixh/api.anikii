@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter,HTTPException
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
+import requests
 
 router = APIRouter(prefix="/anime", tags=["id"])
 
@@ -21,6 +22,8 @@ async def popular(id:int):
 
         # Make the API request
         response = make_api_request(body)  # Assuming make_api_request returns a response object
+        if response.get("errors"):
+            raise HTTPException(status_code=500, detail=response["errors"])
         data = response["data"]["Media"]
         idSub = await fetch_malsyn_data_and_get_provider(data["id"])
 

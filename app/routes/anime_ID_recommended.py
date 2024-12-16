@@ -1,6 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
+import requests
 
 router = APIRouter(prefix="/anime", tags=["id"])
 
@@ -20,6 +21,8 @@ def popular(id:int, page:int=1):
 
         # Make the API request
         response = make_api_request(body)  # Assuming make_api_request returns a response object
+        if response.get("errors"):
+            raise HTTPException(status_code=500, detail=response["errors"])
         media = response["data"]["Media"]
         nodes = media["recommendations"]["nodes"]
         pageInfo = media["recommendations"]["pageInfo"]

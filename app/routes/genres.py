@@ -1,7 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
-from typing import List
+import requests
 
 router = APIRouter()
 
@@ -18,8 +18,8 @@ def genres_GENRE():
         })
         
         # Validate response structure
-        if not genre_res.get("data") or not genre_res["data"].get("GenreCollection"):
-            return {"error": "Invalid response structure"}, 500
+        if genre_res.get("errors"):
+            raise HTTPException(status_code=500, detail=genre_res["errors"])
         
         # Extract the genre collection
         collection = genre_res["data"]["GenreCollection"]
@@ -36,8 +36,8 @@ def genres_GENRE():
             })
             
             # Validate release response structure
-            if not main_res.get("data") or not main_res["data"].get("Page"):
-                return {"error": f"Invalid response structure for genre: {genre}"}, 500
+            if main_res.get("errors"):
+                raise HTTPException(status_code=500, detail=main_res["errors"])
             
             # Append results
             result.append({

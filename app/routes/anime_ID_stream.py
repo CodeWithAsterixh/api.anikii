@@ -24,6 +24,8 @@ async def popular(id: int):
 
         # Make the API request
         response = make_api_request(body)
+        if response.get("errors"):
+            raise HTTPException(status_code=500, detail=response["errors"])
         data = response["data"]["Media"]
         idSub = await fetch_malsyn_data_and_get_provider(id)
         gogoSub = idSub["id_provider"]["idGogo"]

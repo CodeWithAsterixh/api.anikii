@@ -1,6 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
+import requests
 
 router = APIRouter(prefix="/genres", tags=["genre"])
 
@@ -24,7 +25,7 @@ def genres_GENRE(genre:str, page: int=1):
 
         # Check for errors in the response
         if response.get("errors"):
-            return {"error": response["errors"]}, 500
+            raise HTTPException(status_code=500, detail=response["errors"])
 
         # Return the parsed result as JSON
         return {"result": response["data"]["Page"]}, 200

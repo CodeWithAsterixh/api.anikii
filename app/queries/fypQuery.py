@@ -10,7 +10,7 @@ query ($id: Int) {
     recommendations {
       edges {
         node {
-            mediaRecommendation {
+            mediaRecommendation(type:ANIME) {
             id
             title {
                 romaji

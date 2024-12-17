@@ -12,6 +12,7 @@ query ($page: Int = 1) {
                         english
                     }
                     status
+                    episodes
                     format
                     coverImage {
                         extraLarge

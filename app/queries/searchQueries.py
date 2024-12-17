@@ -9,6 +9,7 @@ query ($search: String!) {
             english
         }
         status
+        episodes
         coverImage {
             extraLarge
             medium

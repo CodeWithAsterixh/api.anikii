@@ -12,6 +12,7 @@ query ($genre: String!,$page: Int = 1) {
             english
         }
         status
+        episodes
         coverImage {
             extraLarge
             medium

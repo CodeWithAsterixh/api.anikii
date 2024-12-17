@@ -14,6 +14,7 @@ query ($id: Int,$page: Int = 1) {
                         english
                     }
                     status
+                    episodes
                     format
                     coverImage {
                         extraLarge

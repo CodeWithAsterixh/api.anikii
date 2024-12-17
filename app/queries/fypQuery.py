@@ -17,6 +17,7 @@ query ($id: Int) {
                 english
             }
             status
+            episodes
             coverImage {
                 extraLarge
                 medium

@@ -18,6 +18,7 @@ query ($page: Int = 1, $season: MediaSeason, $year: Int = 2024) {
         english
       }
       status
+      episodes
       format
       coverImage {
         extraLarge

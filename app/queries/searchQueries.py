@@ -1,10 +1,6 @@
 SEARCH = '''
-query ($search: String!, $page: Int = 1) {
-  Page (page: $page, perPage: 20) {
-  pageInfo {
-                lastPage
-                currentPage
-            }
+query ($search: String!) {
+  Page {
     media(search: $search, type: ANIME) {
         id
       title {

@@ -1,16 +1,17 @@
 from fastapi import APIRouter
+import requests
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
 
 router = APIRouter()
 
 @router.get("/search")
-def search(keyword: str):
+def search(keyword: str,page:int=1):
     try:
         # Retrieve the query string using the query manager
         query = query_manager.get_query("search", "search_media")        
         # Define the variables
-        variables = {"search": keyword}
+        variables = {"search": keyword, "page":page}
 
         # Prepare the body for the API request
         body = {

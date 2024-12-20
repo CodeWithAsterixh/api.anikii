@@ -5,7 +5,7 @@ query ($genre: String!,$page: Int = 1) {
       lastPage
       currentPage
     }
-    media(genre: $genre, type: ANIME, popularity_greater: 10000, sort:[TRENDING_DESC, POPULARITY_DESC]) {
+    media(genre: $genre, type: ANIME, sort:[POPULARITY_DESC]) {
         id
         title {
             romaji

@@ -39,7 +39,8 @@ async def home():
         {"endpoint": "/popular/releases/seasons", "description": "Fetch popular anime releases for current season. Includes a page query (?page=number)."},
         {"endpoint": "/popular/releases/seasons/{season}/{year}", "description": f"Fetch popular releases for a specific season within these seasons {available_seasons} and year within {get_years()}. Includes a page query (?page=number)."},
         {"endpoint": "/popular/releases/seasons/{season}", "description": f"Fetch popular anime releases for a specific season within these seasons {available_seasons}. Includes a page query (?page=number)."},
-        {"endpoint": "/search", "description": "Search for anime based on keyword. Includes a keyword query (?keyword=search_string)."}
+        {"endpoint": "/search", "description": "Search for anime based on keyword. Includes a keyword query (?keyword=search_string)."},
+        {"endpoint": "/anime/{id}/stream/ep/{ep}/extra", "description": "Fetch extra streaming episode for a specific anime. Includes page query (?page=number)."}
     ]
     
     # Live URL

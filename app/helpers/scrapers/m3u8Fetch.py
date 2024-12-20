@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urljoin, parse_qs
 from typing import Dict, List
-from .extractors import generate_encrypt_ajax_parameters, decrypt_encrypt_ajax_response  # Replace with actual module
+from app.helpers.extractors import generate_encrypt_ajax_parameters, decrypt_encrypt_ajax_response
 
 # Constants
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"

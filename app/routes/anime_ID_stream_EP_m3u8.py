@@ -1,9 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from app.helpers.scrapers.stream_scraper import get_stream
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
-
+from app.helpers.getEpM3u8BasedGogo import get_episode
 
 router = APIRouter(prefix="/anime", tags=["streaming"])
 
@@ -23,7 +22,7 @@ async def fetch_streaming_info(id: int, ep: int):
         }
 
         # Make the API request to retrieve anime data
-        response = make_api_request(body)
+        response = await make_api_request(body)  # Ensure `make_api_request` is async
         if response.get("errors"):
             raise HTTPException(status_code=500, detail=response["errors"])
 
@@ -31,40 +30,33 @@ async def fetch_streaming_info(id: int, ep: int):
 
         # Fetch the Zoro ID
         idSub = await fetch_malsyn_data_and_get_provider(id)
-        zoroId = idSub.get("id_provider", {}).get("idZoro")
-        if not zoroId:
-            raise HTTPException(status_code=404, detail="Zoro ID not found")
+        gogoId = idSub.get("id_provider", {}).get("idGogo")
+        gogoIdDub = idSub.get("id_provider", {}).get("idGogoDub")
+        if not gogoId or not gogoIdDub:
+            raise HTTPException(status_code=404, detail="ID not found")
 
-        # Generate episode IDs for sub and dub
-        idSp = zoroId.split("-")[-1]
-        episode_id_sub = f"{idSp}$episode${ep}$sub"
-        episode_id_dub = f"{idSp}$episode${ep}$dub"
-        print(episode_id_sub)
-        print(episode_id_dub)
-
-        # Fetch streaming data for sub
+        # Generate episode data for sub and dub
         try:
-            stream_data_sub = await get_stream(episode_id_sub)
+            episode_sub = get_episode(gogoId)
+            episode_dub = get_episode(gogoIdDub)
         except Exception as e:
-            stream_data_sub = {"error": f"Error fetching sub stream: {str(e)}"}
-
-        # Fetch streaming data for dub
-        try:
-            stream_data_dub = await get_stream(episode_id_dub)
-        except Exception as e:
-            stream_data_dub = {"error": f"Error fetching dub stream: {str(e)}"}
+            raise HTTPException(status_code=500, detail=f"Error fetching episodes: {str(e)}")
 
         # Combine results into response object
         result = {
-            "streamingEpisodesSub": stream_data_sub,
-            "streamingEpisodesDub": stream_data_dub,
+            "episodesSub": episode_sub,
+            "episodesDub": episode_dub,
             "animeInfo": {
                 "title": data.get("title", {}).get("romaji"),
                 "episodes": len(data.get("streamingEpisodes", [])),
             },
         }
 
-        return {"result": result}, 200
+        return {"result": result}
+
+    except HTTPException as http_ex:
+        # Re-raise HTTP exceptions with proper status codes
+        raise http_ex
 
     except Exception as e:
         # Handle unforeseen errors

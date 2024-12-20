@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+import requests
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
 

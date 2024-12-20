@@ -8,7 +8,8 @@ router = APIRouter()
 def popular_releases(page: int=1):
     try:
         # Retrieve the query string using the query manager
-        query = query_manager.get_query("upcoming", "get_upcoming")        
+        query = query_manager.get_query("upcoming", "get_upcoming") 
+        print(query)       
         # Define the variables
         variables = {"page": page}
 

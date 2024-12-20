@@ -8,7 +8,7 @@ import requests
 router = APIRouter(prefix="/anime", tags=["id"])
 
 @router.get("/{id}/stream")
-async def popular(id: int):
+async def animeInfoStream(id: int):
     try:
         # Retrieve the query string using the query manager
         query = query_manager.get_query("stream", "get_stream_data")

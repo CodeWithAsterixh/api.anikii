@@ -8,7 +8,7 @@ import requests
 router = APIRouter(prefix="/anime", tags=["id"])
 
 @router.get("/{id}/trailers")
-async def popular(id: int):
+async def animeInfoTrailer(id: int):
     try:
         # Retrieve the query string using the query manager
         query = query_manager.get_query("trailers", "get_trailers")

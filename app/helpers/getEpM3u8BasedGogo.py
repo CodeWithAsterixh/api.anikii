@@ -73,19 +73,21 @@ async def get_episode(id: str, ep: str) -> Optional[Dict]:
             # Scrape server list
             server_list = soup.select("div.anime_muti_link ul li")
             servers = {}
-            for server in server_list:
-                server_class = server.get("class", [])
-                if "anime" not in server_class and server.find("a"):
-                    servers[server_class[0]] = server.find("a").get("data-video")
-
+            if server_list:
+                for server in server_list:
+                    server_class = server.get("class", [])
+                    if "anime" not in server_class and server.find("a"):
+                        servers[server_class[0]] = server.find("a").get("data-video")
+            else:
+                continue
             # Get M3U8 stream using iframe URL
             m3u8 = None
-            if iframe_url:
-                try:
-                    m3u8 = await get_m3u8(iframe_url)  # Ensure `get_m3u8` is async
-                except Exception as e:
-                    print(f"Error fetching M3U8: {e}")
-                    continue
+            # if iframe_url:
+            #     try:
+            #         m3u8 = await get_m3u8(iframe_url)  # Ensure `get_m3u8` is async
+            #     except Exception as e:
+            #         print(f"Error fetching M3U8: {e}")
+            #         continue
                     
 
             # Scrape anime name

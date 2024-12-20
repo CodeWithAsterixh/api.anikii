@@ -30,6 +30,14 @@ async def fetch_streaming_info(id: int, ep: int):
 
         data = response["data"]["Media"]
         
+        # extra info
+        index = 0
+        if ep - 1 >= 0 and ep - 1 < len(data["streamingEpisodes"]):
+            index = ep-1
+        else:
+            index = 0
+        title = data["streamingEpisodes"][index]["title"]
+        thumbnail = data["streamingEpisodes"][index]["thumbnail"]
 
         # Fetch the Zoro ID
         idSub = await fetch_malsyn_data_and_get_provider(id)
@@ -50,7 +58,8 @@ async def fetch_streaming_info(id: int, ep: int):
             "episodesSub": episode_sub,
             "episodesDub": episode_dub,
             "animeInfo": {
-                "title": data.get("title", {}),
+                "title": title,
+                "thumbnail": thumbnail,
                 "episodes":{
                     "currentEpisode":ep,
                     "lastEpisode":data.get("episodes", {}),

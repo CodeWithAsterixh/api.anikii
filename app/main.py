@@ -3,6 +3,7 @@ from app.routes import (
     anime_ID_stream_EP_extra,
     home,
     popular,
+    popular_upcoming,
     popular_releases,
     popular_releases_seasons,
     popular_releases_seasons_SEASON,
@@ -41,6 +42,7 @@ routes = [
     anime_ID_stream_EP.router,
     anime_ID_stream_EP_extra.router,
     anime_ID_trailers.router,
+    popular_upcoming.router
 ]
 
 # Include all routes in the application
@@ -50,4 +52,4 @@ for route in routes:
 # Health check endpoint
 @app.get("/health")
 def health_check():
-    return {"status": "API is up and running!"}
+    return {"status": "API is up and running! go to /popular"}

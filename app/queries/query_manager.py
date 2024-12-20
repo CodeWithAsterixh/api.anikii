@@ -10,6 +10,7 @@ from .streamQuery import STREAM
 from .genreItemQuery import GENRE_ITEM
 from .fypQuery import FYP
 from .trailerQuery import TRAILERS
+from .upcomingQuery import UPCOMING
 
 
 
@@ -33,6 +34,9 @@ class QueryManager:
             },
             "releases": {
                 "get_releases": RELEASES,
+            },
+            "upcoming": {
+                "get_upcoming": UPCOMING,
             },
             "search": {
                 "search_media": SEARCH,

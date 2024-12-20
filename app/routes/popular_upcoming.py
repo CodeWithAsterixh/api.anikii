@@ -4,11 +4,11 @@ from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
 router = APIRouter()
 
-@router.get("/popular/releases")
+@router.get("/popular/upcoming")
 def popular_releases(page: int=1):
     try:
         # Retrieve the query string using the query manager
-        query = query_manager.get_query("releases", "get_releases")        
+        query = query_manager.get_query("upcoming", "get_upcoming")        
         # Define the variables
         variables = {"page": page}
 

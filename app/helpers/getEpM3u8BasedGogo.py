@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from typing import Dict, Optional
-from m3u8Fetch import get_m3u8  # Replace with your `get_m3u8` implementation
+from .scrapers.m3u8Fetch import get_m3u8  # Replace with your `get_m3u8` implementation
 
 # Constants
 BASE_URLS = [

@@ -42,7 +42,7 @@ def genres_GENRE():
             # Append results
             result.append({
                 "genre": genre,
-                "data": main_res
+                "data": main_res["data"]["Page"]["media"]
             })
         
         # Return the results

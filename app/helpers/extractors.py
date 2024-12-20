@@ -10,7 +10,7 @@ KEYS = {
     "iv": b'3134003223491201',
 }
 
-def encrypt_aes(data: str, key: bytes, iv: bytes) -> str:
+async def encrypt_aes(data: str, key: bytes, iv: bytes) -> str:
     """
     Encrypts the input data using AES encryption with the specified key and IV.
 
@@ -26,7 +26,7 @@ def encrypt_aes(data: str, key: bytes, iv: bytes) -> str:
     encrypted_bytes = cipher.encrypt(pad(data.encode('utf-8'), AES.block_size))
     return base64.b64encode(encrypted_bytes).decode('utf-8')
 
-def decrypt_aes(data: str, key: bytes, iv: bytes) -> str:
+async def decrypt_aes(data: str, key: bytes, iv: bytes) -> str:
     """
     Decrypts AES encrypted data with the specified key and IV.
 
@@ -42,7 +42,7 @@ def decrypt_aes(data: str, key: bytes, iv: bytes) -> str:
     decrypted_bytes = unpad(cipher.decrypt(base64.b64decode(data)), AES.block_size)
     return decrypted_bytes.decode('utf-8')
 
-def generate_encrypt_ajax_parameters(script_data: str, video_id: str) -> str:
+async def generate_encrypt_ajax_parameters(script_data: str, video_id: str) -> str:
     """
     Generates the parameters required for `encrypt-ajax.php` by encrypting the video ID
     and decrypting the embedded token from the provided script data.
@@ -63,7 +63,7 @@ def generate_encrypt_ajax_parameters(script_data: str, video_id: str) -> str:
     # Generate and return the parameters string
     return f"id={encrypted_key}&alias={video_id}&{token}"
 
-def decrypt_encrypt_ajax_response(response_data: dict) -> dict:
+async def decrypt_encrypt_ajax_response(response_data: dict) -> dict:
     """
     Decrypts the response from `encrypt-ajax.php`.
 

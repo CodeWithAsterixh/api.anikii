@@ -1,13 +1,13 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urljoin, parse_qs
-from typing import Dict, List
+from typing import Dict
 from app.helpers.extractors import generate_encrypt_ajax_parameters, decrypt_encrypt_ajax_response
 
 # Constants
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
 
-def get_m3u8(iframe_url: str) -> Dict:
+async def get_m3u8(iframe_url: str) -> Dict:
     """
     Retrieves video sources and backup sources from the embedded iframe URL.
 
@@ -37,7 +37,7 @@ def get_m3u8(iframe_url: str) -> Dict:
         raise ValueError("Video ID not found in iframe URL.")
 
     # Generate encryption parameters
-    params = generate_encrypt_ajax_parameters(soup, video_id)
+    params = await generate_encrypt_ajax_parameters(soup, video_id)
 
     # Build the encrypt-ajax.php URL
     encrypt_ajax_url = urljoin(
@@ -56,7 +56,7 @@ def get_m3u8(iframe_url: str) -> Dict:
     encrypted_data = ajax_response.json()
 
     # Decrypt the response
-    decrypted_response = decrypt_encrypt_ajax_response(encrypted_data)
+    decrypted_response = await decrypt_encrypt_ajax_response(encrypted_data)
 
     # Extract sources and backup sources
     for source in decrypted_response.get("source", []):

@@ -62,7 +62,7 @@ async def get_episode(id: str) -> Optional[Dict]:
             m3u8 = None
             if iframe_url:
                 try:
-                    m3u8 = get_m3u8(iframe_url)
+                    m3u8 = await get_m3u8(iframe_url)
                 except Exception as e:
                     print(f"Error fetching M3U8: {e}")
 

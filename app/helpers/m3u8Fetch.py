@@ -74,11 +74,4 @@ def get_m3u8(iframe_url: str) -> Dict:
         "sources_bk": sources_bk,
     }
 
-# Example Usage
-if __name__ == "__main__":
-    example_iframe_url = "https://example.com/embed?id=12345"
-    try:
-        result = get_m3u8(example_iframe_url)
-        print("Result:", result)
-    except Exception as e:
-        print("Error:", e)
+

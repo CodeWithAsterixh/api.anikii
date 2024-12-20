@@ -2,11 +2,8 @@ UPCOMING = """
 query($page: Int = 1) { 
   Page(page: ${page}, perPage: 20) {
     pageInfo {
-      total
-      perPage
-      currentPage
       lastPage
-      hasNextPage
+      currentPage
     }
     airingSchedules(notYetAired: true) {
       airingAt

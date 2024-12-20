@@ -4,7 +4,7 @@ from app.queries.query_manager import query_manager
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
 from app.helpers.getEpM3u8BasedGogo import get_episode
 
-router = APIRouter(prefix="/anime", tags=["streaming"])
+router = APIRouter(prefix="/anime", tags=["id", "ep"])
 
 @router.get("/{id}/stream/ep/{ep}/extra")
 async def fetch_streaming_info(id: int, ep: int):
@@ -20,14 +20,16 @@ async def fetch_streaming_info(id: int, ep: int):
             "query": query,
             "variables": variables,
         }
-
+        
+        
         # Make the API request to retrieve anime data
-        response = await make_api_request(body)  # Ensure `make_api_request` is async
+        response = make_api_request(body)  # Ensure `make_api_request` is async
         if response.get("errors"):
             print("there is error from line 27 in this route")
             raise HTTPException(status_code=500, detail=response["errors"])
 
         data = response["data"]["Media"]
+        
 
         # Fetch the Zoro ID
         idSub = await fetch_malsyn_data_and_get_provider(id)
@@ -38,8 +40,8 @@ async def fetch_streaming_info(id: int, ep: int):
 
         # Generate episode data for sub and dub
         try:
-            episode_sub = await get_episode(f"{gogoId}-episode-{ep}")
-            episode_dub = await get_episode(f"{gogoIdDub}-episode-{ep}")
+            episode_sub = await get_episode(gogoId, ep)
+            episode_dub = await get_episode(gogoIdDub, ep)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error fetching episodes: {str(e)}")
 
@@ -48,8 +50,11 @@ async def fetch_streaming_info(id: int, ep: int):
             "episodesSub": episode_sub,
             "episodesDub": episode_dub,
             "animeInfo": {
-                "title": data.get("title", {}).get("romaji"),
-                "episodes": len(data.get("streamingEpisodes", [])),
+                "title": data.get("title", {}),
+                "episodes":{
+                    "currentEpisode":ep,
+                    "lastEpisode":data.get("episodes", {}),
+                }                 
             },
         }
 

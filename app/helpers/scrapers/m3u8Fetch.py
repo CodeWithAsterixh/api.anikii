@@ -27,12 +27,14 @@ async def get_m3u8(iframe_url: str) -> Dict:
 
     # Fetch the iframe page
     response = requests.get(referer_url, headers={"User-Agent": USER_AGENT})
+    print(response)
     response.raise_for_status()  # Raise an error for unsuccessful responses
     soup = BeautifulSoup(response.text, "html.parser")
 
     # Extract the video ID from the iframe URL
     query_params = parse_qs(parsed_url.query)
-    video_id = query_params.get("id", [None])[0]
+    
+    video_id = query_params.get("slug", [None])[0]
     if not video_id:
         raise ValueError("Video ID not found in iframe URL.")
 

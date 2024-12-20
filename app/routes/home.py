@@ -1,4 +1,6 @@
 from fastapi import APIRouter
+from app.helpers.timeFunction import available_seasons,get_years
+
 
 router = APIRouter()
 
@@ -19,6 +21,7 @@ async def home():
         "Any misuse or abuse of the API may lead to suspension or banning of your access."
     ]
     
+    
     # API Endpoints list with descriptions
     endpoints = [
         {"endpoint": "/popular", "description": "Fetch popular anime. Includes a page query (?page=number)."},
@@ -33,9 +36,9 @@ async def home():
         {"endpoint": "/genres", "description": "Fetch all genres. Includes a page query (?page=number)."},
         {"endpoint": "/genres/{genre}", "description": "Fetch anime by genre. Includes a page query (?page=number)."},
         {"endpoint": "/popular/releases/", "description": "Fetch popular releases. Includes a page query (?page=number)."},
-        {"endpoint": "/popular/releases/seasons", "description": "Fetch popular anime releases for different seasons. Includes a page query (?page=number)."},
-        {"endpoint": "/popular/releases/seasons/{season}/{year}", "description": "Fetch popular releases for a specific season and year. Includes a page query (?page=number)."},
-        {"endpoint": "/popular/releases/seasons/{season}", "description": "Fetch popular anime releases for a specific season. Includes a page query (?page=number)."},
+        {"endpoint": "/popular/releases/seasons", "description": "Fetch popular anime releases for current season. Includes a page query (?page=number)."},
+        {"endpoint": "/popular/releases/seasons/{season}/{year}", "description": f"Fetch popular releases for a specific season within these seasons {available_seasons} and year within {get_years()}. Includes a page query (?page=number)."},
+        {"endpoint": "/popular/releases/seasons/{season}", "description": f"Fetch popular anime releases for a specific season within these seasons {available_seasons}. Includes a page query (?page=number)."},
         {"endpoint": "/search", "description": "Search for anime based on keyword. Includes a keyword query (?keyword=search_string)."}
     ]
     

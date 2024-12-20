@@ -6,23 +6,24 @@ from app.helpers.scrapers.m3u8Fetch import get_m3u8  # Ensure this is async
 
 # Constants
 BASE_URLS = [
-    "https://gogoanime.co.at",
-    "https://anitaku.so",
-    "https://gogoanime3.co",
-    "https://gogoanimes.com.in/",
-    "https://gogoanime.co.ba/",
+    "https://gogoanime.co.at/",
+    "https://anitaku.bz",
+    "https://gogoanime3.cc/",
+    "https://www1.gogoanime.co.ba/",
 ]
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
 )
 
-async def get_episode(id: str) -> Optional[Dict]:
+async def get_episode(id: str, ep: str) -> Optional[Dict]:
     """
     Scrapes episode data for a given anime ID, including name, episode count, streaming link, and servers.
 
     Args:
         id (str): The ID of the anime episode.
+        ep (str): The episode number.
+        name (str): The name of the anime.
 
     Returns:
         Optional[dict]: A dictionary containing the episode's information, or None if not found.
@@ -31,8 +32,22 @@ async def get_episode(id: str) -> Optional[Dict]:
 
     for base_url in BASE_URLS:
         try:
+            # Adjust the `id` based on the base_url
+            if "anitaku" in base_url:
+                # If base URL is anitaku.bz, format id as "{id}-episode-{ep}"
+                formatted_id = f"{id}-episode-{ep}"
+            elif "gogoanime.co.at" in base_url:
+                # If base URL is gogoanime.co.at, format id as "{id}-episode-{ep}-english-subbed"
+                if "dub" not in id.lower():  # If it's not a dub, assume it's sub
+                    formatted_id = f"{id}-episode-{ep}-english-subbed/"
+                else:
+                    formatted_id = f"{id}-episode-{ep}"
+            else:
+                # Default format for other base URLs (if needed)
+                formatted_id = f"{id}-episode-{ep}"
+
             # Construct the episode link
-            link = urljoin(base_url, id)
+            link = urljoin(base_url, formatted_id)
             print(f"Trying URL: {link}")
 
             # Fetch the page asynchronously
@@ -52,7 +67,7 @@ async def get_episode(id: str) -> Optional[Dict]:
             )
 
             # Scrape iframe URL
-            iframe_elem = soup.select_one("div.play-video iframe")
+            iframe_elem = soup.select_one("div.player-embed iframe")
             iframe_url = iframe_elem.get("src") if iframe_elem and "src" in iframe_elem.attrs else None
 
             # Scrape server list
@@ -70,6 +85,8 @@ async def get_episode(id: str) -> Optional[Dict]:
                     m3u8 = await get_m3u8(iframe_url)  # Ensure `get_m3u8` is async
                 except Exception as e:
                     print(f"Error fetching M3U8: {e}")
+                    continue
+                    
 
             # Scrape anime name
             name_elem = soup.select_one("div.anime_video_body h1")

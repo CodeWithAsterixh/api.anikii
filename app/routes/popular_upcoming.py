@@ -9,7 +9,6 @@ def popular_releases(page: int=1):
     try:
         # Retrieve the query string using the query manager
         query = query_manager.get_query("upcoming", "get_upcoming") 
-        print(query)       
         # Define the variables
         variables = {"page": page}
 
@@ -21,13 +20,18 @@ def popular_releases(page: int=1):
 
         # Make the API request
         response = make_api_request(body)  # Assuming make_api_request returns a response object
-
         # Check for errors in the response
         if response.get("errors"):
             return {"error": response["errors"]}, 500
+        
+        pageInfo = response["data"]["Page"]["pageInfo"]
+        media = [item['media'] for item in response["data"]["Page"]["airingSchedules"] if 'media' in item]
 
         # Return the parsed result as JSON
-        return {"result": response["data"]["Page"]}, 200
+        return {"result": {
+            "pageInfo":pageInfo,
+            "media":media
+            }}, 200
 
     except requests.exceptions.RequestException as e:
         # Handle any error with the request

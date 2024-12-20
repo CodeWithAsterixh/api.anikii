@@ -37,3 +37,9 @@ def get_current_season() -> str:
 
 available_seasons = ["FALL", "SPRING", "SUMMER", "WINTER"]
 
+
+def get_years(year1=1999, year2=None):
+    if year2 is None:
+        year2 = datetime.now().year  # Get the current year if year2 is not provided
+    return list(range(year1, year2 + 1))
+

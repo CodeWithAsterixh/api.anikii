@@ -17,7 +17,7 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
 )
 
-def get_episode(id: str) -> Optional[Dict]:
+async def get_episode(id: str) -> Optional[Dict]:
     """
     Scrapes episode data for a given anime ID, including name, episode count, streaming link, and servers.
 

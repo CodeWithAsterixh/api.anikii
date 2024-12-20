@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.routes import (
-    anime_ID_stream_EP_m3u8,
+    anime_ID_stream_EP_extra,
     home,
     popular,
     popular_releases,
@@ -39,7 +39,7 @@ routes = [
     anime_ID_recommended.router,
     anime_ID_stream.router,
     anime_ID_stream_EP.router,
-    anime_ID_stream_EP_m3u8.router,
+    anime_ID_stream_EP_extra.router,
     anime_ID_trailers.router,
 ]
 

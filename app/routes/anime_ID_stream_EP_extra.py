@@ -6,7 +6,7 @@ from app.helpers.getEpM3u8BasedGogo import get_episode
 
 router = APIRouter(prefix="/anime", tags=["streaming"])
 
-@router.get("/{id}/stream/ep/{ep}/zoro")
+@router.get("/{id}/stream/ep/{ep}/extra")
 async def fetch_streaming_info(id: int, ep: int):
     try:
         # Retrieve the GraphQL query
@@ -37,8 +37,8 @@ async def fetch_streaming_info(id: int, ep: int):
 
         # Generate episode data for sub and dub
         try:
-            episode_sub = get_episode(gogoId)
-            episode_dub = get_episode(gogoIdDub)
+            episode_sub = await get_episode(f"{gogoId}-episode-{ep}")
+            episode_dub = await get_episode(f"{gogoIdDub}-episode-{ep}")
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error fetching episodes: {str(e)}")
 

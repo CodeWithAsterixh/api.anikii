@@ -1,32 +1,35 @@
 FYP = '''
-query ($id: Int) {
-  Media(id: $id) {
-    id
-    title {
-      romaji
-      english
-      native
-    }
-    recommendations {
-      edges {
-        node {
-            mediaRecommendation(type:ANIME) {
-            id
-            title {
-                romaji
-                english
+query ($id: Int,$page: Int = 1) {
+    Media(id: $id) {
+        recommendations(page: $page, perPage: 20) {
+            nodes {
+                mediaRecommendation {
+                    id
+                    title {
+                        romaji
+                        english
+                    }
+                    status
+                    episodes
+                    format
+                    coverImage {
+                        extraLarge
+                        medium
+                        color
+                    }
+                    popularity
+                    averageScore
+                    trending
+                    isAdult
+                    status
+                    genres
+                    nextAiringEpisode {
+                        airingAt
+                        episode
+                    }
             }
-            status
-            episodes
-            coverImage {
-                extraLarge
-                medium
-            }
-            popularity
-        }
+          }
+          }
       }
-      }
-    }
-  }
 }
 '''

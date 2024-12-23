@@ -7,7 +7,7 @@ query ($id: Int,$page: Int = 1) {
                 currentPage
             }
             nodes {
-                mediaRecommendation(type:ANIME) {
+                mediaRecommendation {
                     id
                     title {
                         romaji

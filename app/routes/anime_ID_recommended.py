@@ -21,8 +21,10 @@ def popular(id:int, page:int=1):
 
         # Make the API request
         response = make_api_request(body)  # Assuming make_api_request returns a response object
+        
         if response.get("errors"):
             raise HTTPException(status_code=500, detail=response["errors"])
+        
         media = response["data"]["Media"]
         nodes = media["recommendations"]["nodes"]
         pageInfo = media["recommendations"]["pageInfo"]
@@ -43,10 +45,7 @@ def popular(id:int, page:int=1):
             }
             for node in nodes if node.get("mediaRecommendation")
         ]
-        # Check for errors in the response
-        if response.get("errors"):
-            return {"error": response["errors"]}, 500
-
+        
         # Return the parsed result as JSON
         return {"pageInfo":pageInfo,"recommendations":recommendations }, 200
 

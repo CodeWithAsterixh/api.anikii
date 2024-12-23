@@ -9,7 +9,7 @@ query ($id: Int) {
       english
       native
     }
-    description(asHtml:true)
+    description
     season
     seasonYear
     status

@@ -25,7 +25,6 @@ async def fetch_streaming_info(id: int, ep: int):
         # Make the API request to retrieve anime data
         response = make_api_request(body)  # Ensure `make_api_request` is async
         if response.get("errors"):
-            print("there is error from line 27 in this route")
             raise HTTPException(status_code=500, detail=response["errors"])
 
         data = response["data"]["Media"]

@@ -48,7 +48,6 @@ async def get_episode(id: str, ep: str) -> Optional[Dict]:
 
             # Construct the episode link
             link = urljoin(base_url, formatted_id)
-            print(f"Trying URL: {link}")
 
             # Fetch the page asynchronously
             async with httpx.AsyncClient() as client:

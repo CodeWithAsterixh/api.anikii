@@ -27,56 +27,56 @@ async def animeInfoStream(id: int):
         if response.get("errors"):
             raise HTTPException(status_code=500, detail=response["errors"])
         data = response["data"]["Media"]
-        idSub = await fetch_malsyn_data_and_get_provider(id)
-        gogoSub = idSub["id_provider"]["idGogo"]
-        gogoDub = idSub["id_provider"]["idGogoDub"]
+        # idSub = await fetch_malsyn_data_and_get_provider(id)
+        # gogoSub = idSub["id_provider"]["idGogo"]
+        # gogoDub = idSub["id_provider"]["idGogoDub"]
 
-        streamingEpisodes = data["episodes"]
-        episode_dataSub = []
-        episode_dataDub = []
+        # streamingEpisodes = data["episodes"]
+        # episode_dataSub = []
+        # episode_dataDub = []
 
-        # Loop through the length of streamingEpisodes (Sub)
-        for i in range(streamingEpisodes):
-            try:
-                # Construct the URL dynamically for each episode
-                url = f"https://anitaku.bz/{gogoSub}-episode-{i+1}"
-                # Fetch and parse the episode data asynchronously
-                md = parse_streaming_info(url)
-                episode_dataSub.append(md)
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 404:
-                    # Handle 404 error gracefully
-                    episode_dataSub.append({"error": "Episode not found", "episode": i + 1})
-                else:
-                    raise  # Reraise for other HTTP errors
+        # # Loop through the length of streamingEpisodes (Sub)
+        # for i in range(streamingEpisodes):
+        #     try:
+        #         # Construct the URL dynamically for each episode
+        #         url = f"https://anitaku.bz/{gogoSub}-episode-{i+1}"
+        #         # Fetch and parse the episode data asynchronously
+        #         md = parse_streaming_info(url)
+        #         episode_dataSub.append(md)
+        #     except requests.exceptions.HTTPError as e:
+        #         if e.response.status_code == 404:
+        #             # Handle 404 error gracefully
+        #             episode_dataSub.append({"error": "Episode not found", "episode": i + 1})
+        #         else:
+        #             raise  # Reraise for other HTTP errors
 
-        # Loop through the length of streamingEpisodes (Dub)
-        for i in range(streamingEpisodes):
-            try:
-                # Construct the URL dynamically for each episode
-                url = f"https://anitaku.bz/{gogoDub}-episode-{i+1}"
-                # Fetch and parse the episode data asynchronously
-                md = parse_streaming_info(url)
-                episode_dataDub.append(md)
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 404:
-                    # Handle 404 error gracefully
-                    episode_dataDub.append({"error": "Episode not found", "episode": i + 1})
-                else:
-                    raise  # Reraise for other HTTP errors
+        # # Loop through the length of streamingEpisodes (Dub)
+        # for i in range(streamingEpisodes):
+        #     try:
+        #         # Construct the URL dynamically for each episode
+        #         url = f"https://anitaku.bz/{gogoDub}-episode-{i+1}"
+        #         # Fetch and parse the episode data asynchronously
+        #         md = parse_streaming_info(url)
+        #         episode_dataDub.append(md)
+        #     except requests.exceptions.HTTPError as e:
+        #         if e.response.status_code == 404:
+        #             # Handle 404 error gracefully
+        #             episode_dataDub.append({"error": "Episode not found", "episode": i + 1})
+        #         else:
+        #             raise  # Reraise for other HTTP errors
 
-        mod = {
-            "streamingEpisodesSub": episode_dataSub,
-            "streamingEpisodesDub": episode_dataDub,
-            "data": data
-        }
+        # mod = {
+        #     "streamingEpisodesSub": episode_dataSub,
+        #     "streamingEpisodesDub": episode_dataDub,
+        #     "data": data
+        # }
 
         # Check for errors in the response
         if response.get("errors"):
             raise HTTPException(status_code=500, detail=response["errors"])
 
         # Return the parsed result as JSON
-        return {"result": mod}, 200
+        return {"result": data}, 200
 
     except requests.exceptions.RequestException as e:
         # Handle any general request errors

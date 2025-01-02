@@ -17,6 +17,7 @@ from app.routes import (
     anime_ID_recommended,
     anime_ID_stream,
     anime_ID_stream_EP,
+    anime_ID_stream_EP_dub,
     anime_ID_trailers
 )
 
@@ -40,6 +41,7 @@ routes = [
     anime_ID_recommended.router,
     anime_ID_stream.router,
     anime_ID_stream_EP.router,
+    anime_ID_stream_EP_dub.router,
     anime_ID_stream_EP_extra.router,
     anime_ID_trailers.router,
     popular_upcoming.router

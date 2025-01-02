@@ -7,7 +7,7 @@ import requests
 
 router = APIRouter(prefix="/anime", tags=["id", "ep"])
 
-@router.get("/{id}/stream/ep/{ep}")
+@router.get("/{id}/stream/ep/{ep}/dub")
 async def fetch_streaming_info(id: int, ep: int):
     try:
         # Retrieve the GraphQL query
@@ -31,24 +31,26 @@ async def fetch_streaming_info(id: int, ep: int):
 
         # Fetch provider data (sub and dub IDs)
         idSub = await fetch_malsyn_data_and_get_provider(id)
-        gogoSub = idSub["id_provider"]["idGogo"]
+        gogoDub = idSub["id_provider"]["idGogoDub"]
 
         # Construct URLs for sub and dub episodes
-        urlSub = f"https://anitaku.bz/{gogoSub}-episode-{ep}"
+        urlDub = f"https://anitaku.bz/{gogoDub}-episode-{ep}"
 
         # Initialize result containers
-        episode_dataSub = {}
+        episode_dataDub = {}
 
-        # Fetch and parse streaming info for Sub
+        # Fetch and parse streaming info for Dub
         try:
-            episode_dataSub = parse_streaming_info(urlSub)
+            episode_dataDub = parse_streaming_info(urlDub)
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404:
-                episode_dataSub = {"error": "Sub episode not found", "episode": ep}
+                episode_dataDub = {"error": "Dub episode not found", "episode": ep}
             else:
                 raise
 
-        return {"result": episode_dataSub}, 200
+        
+
+        return {"result": episode_dataDub}, 200
 
     except requests.exceptions.RequestException as e:
         # Handle general request errors

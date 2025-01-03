@@ -31,7 +31,7 @@ def parse_streaming_info(url: str) -> StreamInfo:
             stream_links.append(StreamLink(name, url.get('data-video')))
 
     # Extract the maximum episode number
-    max_episode = soup.select_one('ul#episode_page li').find('a').get('ep_end')
+    max_episode = soup.select_one('ul#episode_page').select('li')[-1].find('a').get('ep_end')
     # Extract anime information
     anime_info = {
         'title': soup.select_one('div.anime-info a[title]').text.strip(),  # Extract the anime title

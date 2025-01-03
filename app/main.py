@@ -18,7 +18,8 @@ from app.routes import (
     anime_ID_stream,
     anime_ID_stream_EP,
     anime_ID_stream_EP_dub,
-    anime_ID_trailers
+    anime_ID_trailers,
+    anime_ID_stream_external
 )
 
 # Initialize the FastAPI application
@@ -44,7 +45,8 @@ routes = [
     anime_ID_stream_EP_dub.router,
     anime_ID_stream_EP_extra.router,
     anime_ID_trailers.router,
-    popular_upcoming.router
+    popular_upcoming.router,
+    anime_ID_stream_external.router
 ]
 
 # Include all routes in the application

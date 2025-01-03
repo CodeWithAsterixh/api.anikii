@@ -34,6 +34,7 @@ async def home():
         {"endpoint": "/anime/{id}/stream/{ep}", "description": "Fetch streaming episode sub links for a specific anime."},
         {"endpoint": "/anime/{id}/stream/{ep}/dub", "description": "Fetch streaming episode dub links for a specific anime."},
         {"endpoint": "/anime/{id}/stream/{ep}/extra", "description": "Fetch extra streaming information for a specific anime episode."},
+        {"endpoint": "/anime/{id}/stream/external", "description": "Fetch external streaming links for a specific anime."},
         {"endpoint": "/genres", "description": "Fetch all genres. Includes a page query (?page=number)."},
         {"endpoint": "/genres/{genre}", "description": "Fetch anime by genre. Includes a page query (?page=number)."},
         {"endpoint": "/popular/releases/", "description": "Fetch popular releases. Includes a page query (?page=number)."},

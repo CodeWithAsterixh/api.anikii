@@ -13,6 +13,11 @@ query ($id: Int, $page: Int = 1) {
                 id,
                 name{
                     full
+                    first
+                    last
+                    native
+                    alternative
+                    userPreferred
                 }
                 image{
                     medium

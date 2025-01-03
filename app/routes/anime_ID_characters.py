@@ -7,12 +7,12 @@ import requests
 router = APIRouter(prefix="/anime", tags=["id"])
 
 @router.get("/{id}/characters")
-def popular(id:int):
+def characters(id:int, page:int=1):
     try:
         # Retrieve the query string using the query manager
         query = query_manager.get_query("characters", "get_characters")        
         # Define the variables
-        variables = {"id": id}
+        variables = {"id": id,"page": page}
 
         # Prepare the body for the API request
         body = {

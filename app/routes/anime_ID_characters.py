@@ -27,16 +27,22 @@ def popular(id:int):
         
         pageInfo = response["data"]["Media"]["characters"]["pageInfo"]
         characters = response["data"]["Media"]["characters"]["edges"]
+        nodes = response["data"]["Media"]["characters"]["nodes"]
         # Flatten the `node` key while keeping other data
         flattened_characters = [
-            {**character["node"], **{k: v for k, v in character.items() if k != "node"}}
-            for character in characters
+            {
+                **character["node"],
+                **{k: v for k, v in character.items() if k != "node"},
+                "name": nodes[index]["name"]
+            }
+            for index, character in enumerate(characters)
             if character.get("node")
         ]
         result = {
             "pageInfo": pageInfo,
             "characters": flattened_characters
         }
+        
         # Return the parsed result as JSON
         return {"result": result}, 200
 

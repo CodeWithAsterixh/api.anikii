@@ -8,16 +8,21 @@ query ($id: Int, $page: Int = 1) {
             lastPage
             currentPage
         }
+        nodes{
+             
+                name{
+                    full
+                    native
+                    alternative
+                    userPreferred
+                }
+                
+        }
         edges{
             node{
                 id,
                 name{
                     full
-                    first
-                    last
-                    native
-                    alternative
-                    userPreferred
                 }
                 image{
                     medium

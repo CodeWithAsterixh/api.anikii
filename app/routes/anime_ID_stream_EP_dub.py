@@ -10,27 +10,10 @@ router = APIRouter(prefix="/anime", tags=["id", "ep"])
 @router.get("/{id}/stream/ep/{ep}/dub")
 async def fetch_streaming_info(id: int, ep: int):
     try:
-        # Retrieve the GraphQL query
-        query = query_manager.get_query("stream", "get_stream_data")
-
-        # Define variables for the GraphQL query
-        variables = {"id": id}
-
-        # Prepare the API request body
-        body = {
-            "query": query,
-            "variables": variables
-        }
-
-        # Make the API request to retrieve anime data
-        response = make_api_request(body)
-        if response.get("errors"):
-            raise HTTPException(status_code=500, detail=response["errors"])
-
-        data = response["data"]["Media"]
 
         # Fetch provider data (sub and dub IDs)
         idSub = await fetch_malsyn_data_and_get_provider(id)
+        print(1)
         gogoDub = idSub["id_provider"]["idGogoDub"]
 
         # Construct URLs for sub and dub episodes

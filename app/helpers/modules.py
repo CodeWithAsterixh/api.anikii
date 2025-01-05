@@ -10,7 +10,6 @@ def fetch_mapping_data(anime_id: int):
         
         # Make the GET request
         response = requests.get(url)
-        
         # Raise an exception for HTTP errors
         response.raise_for_status()
         
@@ -38,10 +37,14 @@ async def get_id_each_provider(json_data: dict, anime_id: int) -> dict:
 
     # Iterate through each site in the JSON
     for anime_page, anime_info in json_data.get("Sites", {}).items():
-        for anime_id_key, anime in anime_info.items():
+        for anime_id_key, anime in anime_info.items(): 
             if anime_page == "Gogoanime":
                 id_gogo = list(anime_info.values())[0].get("identifier", "")
-                id_gogo_dub = list(anime_info.values())[1].get("identifier", "")
+                
+                # Check if there is a second item in the list before accessing it
+                if len(anime_info.values()) > 1 and list(anime_info.values())[1]:
+                    id_gogo_dub = list(anime_info.values())[1].get("identifier", "")
+                
             elif anime_page == "Zoro":
                 id_zoro = urlparse(anime.get("url", "")).path.strip("/")
             elif anime_page == "animepahe":
@@ -67,7 +70,6 @@ async def get_id_each_provider(json_data: dict, anime_id: int) -> dict:
             "idZoro": id_zoro,
             "idPahe": id_pahe,
         }
-
 
 # Main function to fetch data and get provider IDs
 async def fetch_malsyn_data_and_get_provider(anime_id: int):

@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
 import requests
+from app.helpers.json.cacheData import runCacheData,saveCacheData
+
 
 router = APIRouter(prefix="/genres", tags=["genre"])
 
@@ -9,6 +11,9 @@ router = APIRouter(prefix="/genres", tags=["genre"])
 @router.get("/{genre}")
 def genres_GENRE(genre:str, page: int=1):
     try:
+        cacheDataAvailable = runCacheData(page,f"genres_{genre}")
+        if cacheDataAvailable:
+            return cacheDataAvailable
         # Retrieve the query string using the query manager
         query = query_manager.get_query("genre_item", "get_genre_item")        
         # Define the variables
@@ -26,9 +31,12 @@ def genres_GENRE(genre:str, page: int=1):
         # Check for errors in the response
         if response.get("errors"):
             raise HTTPException(status_code=500, detail=response["errors"])
-
+        
+        pageInfo = response["data"]["Page"]["pageInfo"]
+        media = response["data"]["Page"]["media"]
+        data = saveCacheData(pageInfo, media, f"genres_{genre}", page)
         # Return the parsed result as JSON
-        return {"result": response["data"]["Page"]}, 200
+        return data, 200
 
     except requests.exceptions.RequestException as e:
         # Handle any error with the request

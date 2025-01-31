@@ -1,0 +1,76 @@
+import os
+import json
+
+def jsonLoad(fileName: str) -> dict:
+    """
+    Loads data from a JSON file if it exists; otherwise, returns an empty dictionary.
+
+    Args:
+        fileName (str): The name of the JSON file (without extension).
+
+    Returns:
+        dict: The data from the JSON file or an empty dictionary if the file doesn't exist.
+    """
+    json_path = f"/tmp/anikii/{fileName}.json"
+    print(f"Loading data from {json_path}")
+
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r") as file:
+                return json.load(file)
+        except json.JSONDecodeError:
+            print("Error: JSON file is corrupted. Returning empty data.")
+            return {}
+    return {}
+
+def jsonSave(fileName: str, page: int, new_items: dict) -> dict:
+    """
+    Loads existing JSON data, adds new items to the specified page, and saves the updated data.
+
+    Args:
+        fileName (str): The name of the JSON file (without extension).
+        page (int): The page number to update.
+        new_items (dict): A dictionary containing "lastPage" and a list of new items under "data".
+
+    Returns:
+        dict: The final data that was saved.
+    """
+
+    # Ensure the directory exists
+    directory = "/tmp/anikii"
+    os.makedirs(directory, exist_ok=True)
+
+    json_path = os.path.join(directory, f"{fileName}.json")
+    print(f"Saving data to {json_path}")
+
+    # Load existing data if available
+    existing_data = jsonLoad(fileName)
+
+    # Ensure a structured dictionary
+    data = {
+        "lastPage": new_items.get("lastPage", existing_data.get("lastPage", 1)),
+        "pages": existing_data.get("pages", {})
+    }
+
+    # Convert page number to string to ensure consistency in JSON keys
+    page_key = str(page)
+
+    # Ensure the specified page exists as a list
+    data["pages"].setdefault(page_key, [])
+
+    # Append new items to the page's list
+    if isinstance(new_items.get("data"), list):
+        data["pages"][page_key].extend(new_items["data"])
+    else:
+        print(f"Error: 'data' field is missing or not a list. No changes made.")
+        return existing_data
+
+    # Save the updated data
+    try:
+        with open(json_path, "w") as file:
+            json.dump(data, file, indent=4)
+        print(f"Updated page {page} successfully.")
+        return data
+    except Exception as e:
+        print(f"Error writing to JSON file: {e}")
+        return existing_data

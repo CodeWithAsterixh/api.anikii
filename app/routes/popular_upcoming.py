@@ -2,11 +2,16 @@ from fastapi import APIRouter
 import requests
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
+from app.helpers.json.cacheData import runCacheData,saveCacheData
+
 router = APIRouter()
 
 @router.get("/popular/upcoming")
-def popular_releases(page: int=1):
+def popular_upcoming(page: int=1):
     try:
+        cacheDataAvailable = runCacheData(page,"popular_upcoming")
+        if cacheDataAvailable:
+            return cacheDataAvailable
         # Retrieve the query string using the query manager
         query = query_manager.get_query("upcoming", "get_upcoming") 
         # Define the variables
@@ -24,14 +29,13 @@ def popular_releases(page: int=1):
         if response.get("errors"):
             return {"error": response["errors"]}, 500
         
-        pageInfo = response["data"]["Page"]["pageInfo"]
         media = [item['media'] for item in response["data"]["Page"]["airingSchedules"] if 'media' in item]
-
+        pageInfo = response["data"]["Page"]["pageInfo"]
+        
+        data = saveCacheData(pageInfo, media, "popular_upcoming", page)
         # Return the parsed result as JSON
-        return {"result": {
-            "pageInfo":pageInfo,
-            "media":media
-            }}, 200
+        return data, 200
+
 
     except requests.exceptions.RequestException as e:
         # Handle any error with the request

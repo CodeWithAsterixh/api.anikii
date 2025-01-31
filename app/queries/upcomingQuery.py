@@ -1,37 +1,33 @@
 UPCOMING = """
 query($page: Int = 1) { 
-  Page(page: $page, perPage: 20) {
-    pageInfo {
-      lastPage
-      currentPage
+    Page(page: $page, perPage: 20) {
+        pageInfo {
+            lastPage
+            currentPage
+        }
+        airingSchedules(notYetAired: true) {
+            media {
+                id
+                title {
+                    romaji
+                    english
+                }
+                status
+                format
+                coverImage {
+                    extraLarge
+                    color
+                }
+                popularity
+                averageScore
+                episodes
+                trending
+                bannerImage
+                startDate {
+                    year
+                }
+            }
+        }
     }
-    airingSchedules(notYetAired: true) {
-      media {
-        id
-        title {
-          romaji
-          english
-        }
-        status
-        episodes
-        format
-        coverImage {
-          extraLarge
-          medium
-          color
-        }
-        popularity
-        averageScore
-        trending
-        isAdult
-        status
-        genres
-        nextAiringEpisode {
-          airingAt
-          episode
-        }
-      }
-    }
-  }
 }
 """

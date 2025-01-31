@@ -14,27 +14,24 @@ query ($page: Int = 1, $season: MediaSeason, $year: Int = 2024) {
     ) {
       id
       title {
-        romaji
-        english
+          romaji
+          english
       }
       status
-      episodes
       format
       coverImage {
-        extraLarge
-        medium
-        color
+          extraLarge
+          color
       }
       popularity
       averageScore
+      episodes
       trending
-      isAdult
       status
-      genres
-      nextAiringEpisode {
-        airingAt
-        episode
-      }
+      bannerImage
+      startDate {
+        year
+      } 
     }
   }
 }

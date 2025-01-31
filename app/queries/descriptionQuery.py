@@ -7,14 +7,12 @@ query ($id: Int) {
     title {
       romaji
       english
-      native
     }
     description
     season
     seasonYear
     status
     type
-    idMal
     trailer{
         id
         site
@@ -22,7 +20,6 @@ query ($id: Int) {
     }
     coverImage{
         extraLarge
-        medium
         color
     }
     bannerImage
@@ -33,13 +30,6 @@ query ($id: Int) {
     format
     startDate{
       year
-      month
-      day
-    }
-    endDate{
-      year
-      month
-      day
     }
     nextAiringEpisode{
       airingAt

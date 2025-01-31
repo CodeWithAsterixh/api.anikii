@@ -2,6 +2,7 @@ from fastapi import APIRouter,HTTPException
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
+from app.structure.details import structureAnilistDetails
 import requests
 
 router = APIRouter(prefix="/anime", tags=["id"])
@@ -30,13 +31,14 @@ async def animeInfo(id:int):
         # Check for errors in the response
         if response.get("errors"):
             return {"error": response["errors"]}, 500
-
-        # Return the parsed result as JSON
-        return {"result": {
+        
+        detailsData = structureAnilistDetails({
                     "data": data,
                     "idSub": idSub
-                }
-            }, 200
+                })
+
+        # Return the parsed result as JSON
+        return detailsData, 200
 
     except requests.exceptions.RequestException as e:
         # Handle any error with the request

@@ -2,6 +2,8 @@ from fastapi import APIRouter
 from app.helpers.fetchHelpers import make_api_request
 from app.helpers.timeFunction import this_when, get_current_season, available_seasons
 from app.queries.query_manager import query_manager
+from app.helpers.json.cacheData import runCacheData,saveCacheData
+
 import requests
 
 router = APIRouter(prefix="/popular/releases/seasons", tags=["season"])
@@ -9,6 +11,9 @@ router = APIRouter(prefix="/popular/releases/seasons", tags=["season"])
 @router.get("/{season}")
 def popular_releases_seasons_SEASON(season: str, page: int=1):
     try:
+        cacheDataAvailable = runCacheData(page,f"popular_releases_seasons_{season}")
+        if cacheDataAvailable:
+            return cacheDataAvailable
         # Retrieve the query string using the query manager
         query = query_manager.get_query("releases", "get_releases")
 
@@ -39,8 +44,12 @@ def popular_releases_seasons_SEASON(season: str, page: int=1):
         if "errors" in response:
             return {"error": response["errors"]}, 500
 
+        media = response["data"]["Page"]["media"]
+        pageInfo = response["data"]["Page"]["pageInfo"]
+        
+        data = saveCacheData(pageInfo, media, f"popular_releases_seasons_{season}", page)
         # Return the parsed result as JSON
-        return {"result": response["data"]["Page"]}, 200
+        return data, 200
 
     except requests.exceptions.RequestException as e:
         # Handle request-specific errors (e.g., network, timeout)

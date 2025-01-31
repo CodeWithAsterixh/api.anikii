@@ -2,12 +2,17 @@ from fastapi import APIRouter
 import requests
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
+from app.helpers.json.cacheData import runCacheData,saveCacheData
+
 
 router = APIRouter()
 
 @router.get("/popular")
 def popular(page: int=1):
     try:
+        cacheDataAvailable = runCacheData(page,"popular")
+        if cacheDataAvailable:
+            return cacheDataAvailable
         # Retrieve the query string using the query manager
         query = query_manager.get_query("popular", "get_popular_media")        
         # Define the variables
@@ -26,8 +31,12 @@ def popular(page: int=1):
         if response.get("errors"):
             return {"error": response["errors"]}, 500
 
+        pageInfo = response["data"]["Page"]["pageInfo"]
+        media = response["data"]["Page"]["media"]
+        data = saveCacheData(pageInfo, media, "popular", page)
         # Return the parsed result as JSON
-        return {"result": response["data"]["Page"]}, 200
+        return data, 200
+
 
     except requests.exceptions.RequestException as e:
         # Handle any error with the request

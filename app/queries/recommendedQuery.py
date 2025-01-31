@@ -1,5 +1,5 @@
 RECOMMENDED = '''
-query ($id: Int,$page: Int = 1) {
+query ($id: Int, $page: Int = 1) {
     Media(id: $id) {
         recommendations(page: $page, perPage: 20) {
             pageInfo {
@@ -14,26 +14,22 @@ query ($id: Int,$page: Int = 1) {
                         english
                     }
                     status
-                    episodes
                     format
                     coverImage {
                         extraLarge
-                        medium
                         color
                     }
                     popularity
                     averageScore
+                    episodes
                     trending
-                    isAdult
-                    status
-                    genres
-                    nextAiringEpisode {
-                        airingAt
-                        episode
+                    bannerImage
+                    startDate {
+                        year
                     }
+                }
             }
-          }
-          }
-      }
+        }
+    }
 }
 '''

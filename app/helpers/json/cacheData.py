@@ -3,12 +3,16 @@ from app.helpers.json.pageLocator import ensure_page_exists
 from app.structure.listItem import structureAnilistArray
 
 
-def runCacheData(page: int, filePath: str):
+def runCacheData(page: int|None, filePath: str):
     """
     Run the cache data
     """
+    
+    
     loadData = jsonLoad(filePath)
-    if loadData and ensure_page_exists(loadData, page):
+    if not page:
+        return loadData
+    if loadData and ensure_page_exists(loadData, page) and page:
             print("serving from cache")
             lastPage = loadData["lastPage"]
             pageInfo = {
@@ -20,6 +24,7 @@ def runCacheData(page: int, filePath: str):
                 "pageInfo": pageInfo,
                 "data": data
             }, 200
+
 
     else:
         print("serving from API")

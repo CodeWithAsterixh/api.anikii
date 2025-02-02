@@ -74,3 +74,36 @@ def jsonSave(fileName: str, page: int, new_items: dict) -> dict:
     except Exception as e:
         print(f"Error writing to JSON file: {e}")
         return existing_data
+
+def jsonWrite(fileName: str, content):
+    """
+    Loads existing JSON data, adds new items to the specified page, and saves the updated data.
+
+    Args:
+        fileName (str): The name of the JSON file (without extension).
+        page (int): The page number to update.
+        new_items (dict): A dictionary containing "lastPage" and a list of new items under "data".
+
+    Returns:
+        dict: The final data that was saved.
+    """
+
+    # Ensure the directory exists
+    directory = "/tmp/anikii"
+    os.makedirs(directory, exist_ok=True)
+
+    json_path = os.path.join(directory, f"{fileName}.json")
+    print(f"Saving data to {json_path}")
+
+    # Load existing data if available
+    existing_data = jsonLoad(fileName)
+
+    # Save the updated data
+    try:
+        with open(json_path, "w") as file:
+            json.dump(content, file, indent=4)
+        print(f"Updated content successfully.")
+        return content
+    except Exception as e:
+        print(f"Error writing to JSON file: {e}")
+        return existing_data

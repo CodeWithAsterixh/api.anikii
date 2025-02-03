@@ -25,9 +25,11 @@ def search(keyword: str):
         # Check for errors in the response
         if response.get("errors"):
             return {"error": response["errors"]}, 500
+        
+        data = response["data"]["Page"]["media"]
 
         # Return the parsed result as JSON
-        return {"result": response["data"]["Page"]}, 200
+        return data, 200
 
     except requests.exceptions.RequestException as e:
         # Handle any error with the request

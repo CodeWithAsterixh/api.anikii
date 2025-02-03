@@ -2,6 +2,7 @@ from fastapi import APIRouter
 import requests
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
+from app.structure.listItem import structureAnilistArray
 
 router = APIRouter()
 
@@ -26,10 +27,13 @@ def search(keyword: str):
         if response.get("errors"):
             return {"error": response["errors"]}, 500
         
+        
+        
         data = response["data"]["Page"]["media"]
+        structuredData = structureAnilistArray(data)
 
         # Return the parsed result as JSON
-        return data, 200
+        return structuredData, 200
 
     except requests.exceptions.RequestException as e:
         # Handle any error with the request

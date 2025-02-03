@@ -6,7 +6,7 @@ def structureAnilistArray(data_list: list) -> list:
     for data in data_list:
         # Extract necessary fields with fallback/default values
         anime_id = data['id']
-        title = data['title'].get('english', data['title'].get('romaji', 'Unknown Title'))
+        title = data['title'].get('english') or data['title'].get('romaji', 'Unknown Title')  # Default 'Unknown Title' if not available
         episodes = data.get('episodes', 0)  # Default 0 if not available
         status = data.get('status', 'UNKNOWN')
         cover_image = data['coverImage'].get('extraLarge', '')  # Default empty string

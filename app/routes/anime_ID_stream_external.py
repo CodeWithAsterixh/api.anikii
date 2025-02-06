@@ -48,7 +48,7 @@ async def fetch_streaming_info(id: int):
             else:
                 raise
 
-        return {"result": episode_dataSub}, 200
+        return episode_dataSub, 200
 
     except requests.exceptions.RequestException as e:
         # Handle general request errors

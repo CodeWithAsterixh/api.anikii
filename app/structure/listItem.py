@@ -1,10 +1,7 @@
 import random
 
-def structureAnilistArray(data_list: list) -> list:
-    structured_list = []
 
-    for data in data_list:
-        # Extract necessary fields with fallback/default values
+def structureAnilistItem(data:dict)->dict:
         anime_id = data['id']
         title = data['title'].get('english') or data['title'].get('romaji', 'Unknown Title')  # Default 'Unknown Title' if not available
         episodes = data.get('episodes', 0)  # Default 0 if not available
@@ -43,6 +40,14 @@ def structureAnilistArray(data_list: list) -> list:
             'trending': trending,
             'releaseDate': release_date
         }
+        
+        return structured_data
+def structureAnilistArray(data_list: list) -> list:
+    structured_list = []
+
+    for data in data_list:
+        # Extract necessary fields with fallback/default values
+        structured_data = structureAnilistItem(data)
 
         # Add structured object to the list
         structured_list.append(structured_data)

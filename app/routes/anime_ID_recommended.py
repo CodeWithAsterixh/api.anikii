@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
+from app.structure.listItem import structureAnilistItem
 import requests
 
 router = APIRouter(prefix="/anime", tags=["id"])
@@ -28,26 +29,17 @@ def popular(id:int, page:int=1):
         media = response["data"]["Media"]
         nodes = media["recommendations"]["nodes"]
         pageInfo = media["recommendations"]["pageInfo"]
-        recommendations = [
-            {
-                "id": node["mediaRecommendation"]["id"],
-                "title": {
-                    "romaji": node["mediaRecommendation"]["title"]["romaji"],
-                    "english": node["mediaRecommendation"]["title"].get("english", None),
-                    "native": node["mediaRecommendation"]["title"].get("native", None)
-                },
-                "status": node["mediaRecommendation"]["status"],
-                "coverImage": {
-                    "extraLarge": node["mediaRecommendation"]["coverImage"]["extraLarge"],
-                    "medium": node["mediaRecommendation"]["coverImage"]["medium"]
-                },
-                "popularity": node["mediaRecommendation"]["popularity"]
-            }
-            for node in nodes if node.get("mediaRecommendation")
-        ]
+        
+        
+        # recommendations = structureAnilistArray(nodes)
+        nodesArray = []
+        for node in nodes:
+            structureData = structureAnilistItem(node.get("mediaRecommendation"))
+            nodesArray.append(structureData)
+
         
         # Return the parsed result as JSON
-        return {"pageInfo":pageInfo,"recommendations":recommendations }, 200
+        return {"pageInfo":pageInfo,"recommendations":nodesArray }, 200
 
     except requests.exceptions.RequestException as e:
         # Handle any error with the request

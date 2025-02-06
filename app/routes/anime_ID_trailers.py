@@ -34,7 +34,7 @@ async def animeInfoTrailer(id: int):
             raise HTTPException(status_code=500, detail=response["errors"])
 
         # Return the parsed result as JSON
-        return {"result": data}, 200
+        return data, 200
 
     except requests.exceptions.RequestException as e:
         # Handle any general request errors

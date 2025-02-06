@@ -1,6 +1,7 @@
 from fastapi import APIRouter,HTTPException
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
+from app.structure.details import structureAnilistCharacters
 import requests
 
 
@@ -27,24 +28,28 @@ def characters(id:int, page:int=1):
         
         pageInfo = response["data"]["Media"]["characters"]["pageInfo"]
         characters = response["data"]["Media"]["characters"]["edges"]
-        nodes = response["data"]["Media"]["characters"]["nodes"]
         # Flatten the `node` key while keeping other data
-        flattened_characters = [
-            {
-                **character["node"],
-                **{k: v for k, v in character.items() if k != "node"},
-                "name": nodes[index]["name"]
-            }
-            for index, character in enumerate(characters)
-            if character.get("node")
-        ]
+        # flattened_characters = [
+        #     {
+        #         **character["node"],
+        #         **{k: v for k, v in character.items() if k != "node"},
+        #         "name": nodes[index]["name"]
+        #     }
+        #     for index, character in enumerate(characters)
+        #     if character.get("node")
+        # ]
+        # result = {
+        #     "pageInfo": pageInfo,
+        #     "characters": flattened_characters
+        # }
+        ch = structureAnilistCharacters(characters)
         result = {
             "pageInfo": pageInfo,
-            "characters": flattened_characters
+            "characters": ch
         }
         
         # Return the parsed result as JSON
-        return {"result": result}, 200
+        return result, 200
 
     except requests.exceptions.RequestException as e:
         # Handle any error with the request

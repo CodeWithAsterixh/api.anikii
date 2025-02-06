@@ -1,4 +1,5 @@
 import random
+from app.helpers.formatAgeRange import format_range
 
 def structureAnilistDetails(dataObj: dict) -> dict:
     
@@ -9,6 +10,8 @@ def structureAnilistDetails(dataObj: dict) -> dict:
     title = data['title'].get('english', data['title'].get('romaji', 'Unknown Title'))
     episodes = data.get('episodes', 0)  # Default 0 if not available
     status = data.get('status', 'UNKNOWN')
+    description = data.get('description', '')
+    genres = data.get('genres', [])
     cover_image = data['coverImage'].get('extraLarge', '')  # Default empty string
     banner_image = data.get('bannerImage', '')  # Default empty string
     
@@ -40,6 +43,8 @@ def structureAnilistDetails(dataObj: dict) -> dict:
         'id': data['id'],
         "anime_id_ext": anime_id_ext,
         'title': title,
+        'description': description,
+        "genres": genres,
         'episodes': episodes,
         'status': status,
         'coverImage': {
@@ -52,8 +57,10 @@ def structureAnilistDetails(dataObj: dict) -> dict:
         'averageScore': average_score,
         'trending': trending,
         'releaseDate': release_date,
-        'season': season,
-        'seasonYear': seasonYear,
+        'season': {
+            "type":season,
+            'year': seasonYear,
+        },
         'type': type,
         'trailer': trailer,
         'nextAiringEpisode': nextAiringEpisode,
@@ -81,17 +88,58 @@ def structureAnilistTrailer(data: dict) -> dict:
 
     return structured_data
 
-# def structureAnilistCharacters(data: dict) -> dict:
+def structureAnilistCharacters(characters_list: list) -> list:
     
-#     # Extract necessary fields with fallback/default values
+    # Extract necessary fields with fallback/default values
+    results = []    
+    for node in characters_list:
+        character = node.get("node", {})
+        characterId = character.get("id", None)
+        name = character.get("name", {}).get("full", None)
+        image = character.get("image", {}).get("large", None) or character.get("image", {}).get("medium", None)
+        gender = character.get("gender", None)
+        description = character.get("description", None)
+        dateOfBirth = character.get("dateOfBirth", {})
+        age = character.get("age", "")
+        if age is not None:
+          age = format_range(age)
+        
+        
+        role = node.get("role", None)
+        
+        voiceActorsList = []
+        
+        voiceActors = node.get("voiceActors", {})
+        
+        for voiceActor in voiceActors:
+            voiceActorsName = voiceActor.get("name", {}).get("full", None)
+            voiceActorsLanguage = voiceActor.get("languageV2",None)
+            voiceActorsImage = voiceActor.get("image", {}).get("large", None) or voiceActor.get("image", {}).get("medium", None)
+            voiceActorsList.append({
+                "name": voiceActorsName,
+                "language": voiceActorsLanguage,
+                "image": voiceActorsImage
+            })
+        
+        results.append({
+            "character":{
+                "id": characterId,
+                "role": role,
+                "name": name,
+                "image": image,
+                "gender": gender,
+                "description": description,
+                "dateOfBirth": dateOfBirth,
+                "age": age
+            },
+            "voiceActors":voiceActorsList
+        })
+        
+        
 
-#     trailer = data.get('trailer', {})
 
-#     # Create the structured object
-#     structured_data = {
-#         'trailer': trailer,
-#     }
+   
 
-#     # Add structured object to the list
+    # Add structured object to the list
 
-#     return structured_data
+    return results

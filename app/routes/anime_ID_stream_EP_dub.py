@@ -33,7 +33,7 @@ async def fetch_streaming_info(id: int, ep: int):
 
         
 
-        return {"result": episode_dataDub}, 200
+        return episode_dataDub, 200
 
     except requests.exceptions.RequestException as e:
         # Handle general request errors

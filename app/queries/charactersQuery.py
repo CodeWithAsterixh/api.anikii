@@ -8,29 +8,25 @@ query ($id: Int, $page: Int = 1) {
             lastPage
             currentPage
         }
-        nodes{
-             
-                name{
-                    full
-                    native
-                    alternative
-                    userPreferred
-                }
-                
-        }
+
         edges{
             node{
-                id,
+                id
                 name{
                     full
                 }
                 image{
+                    large,
                     medium
                 }
                 gender
+                description
+                dateOfBirth{
+                    month
+                    day
+                }
+                age
             }
-            name
-            id
             role
             voiceActors {
                 name{
@@ -38,6 +34,7 @@ query ($id: Int, $page: Int = 1) {
                 }
                 languageV2
                 image{
+                    large,
                     medium
                 }
             }

@@ -17,9 +17,35 @@ async def clearTmpSpecific(name:str):
     if f"{formatted_name}.json" in available_files:
         data = jsonLoad(formatted_name)
         meta = jsonLoadMeta(formatted_name)
+        pages_length = 0
+        total_items = 0
+        thumbnail = None
+        if isinstance(data, list):
+            total_items = len(data)
+            
+        if not isinstance(data, list) and data.get("pages"):
+            pages_length = len(data["pages"])
+            # Step 1: Get all pages and sort them numerically
+            sorted_page_keys = sorted(data["pages"].keys(), key=int)  # Ensure sorting is numerical
+
+            # Step 2: Get the first page (if available)
+            first_page_key = sorted_page_keys[0] if sorted_page_keys else None
+            first_page_items = data["pages"].get(first_page_key, []) if first_page_key else []
+
+            # Step 3: Get the first item from that first page
+            first_item = first_page_items[0] if first_page_items else None
+            # Step 4: Calculate total number of items in all pages
+            total_items = sum(len(items) for items in data["pages"].values())
+            thumbnail = first_item.get("coverImage",{}).get("cover_image",None)
+
         return {
         "message": f"{formatted_name} is available",
-        "meta":meta,
+        "meta":{
+            **meta,
+            "pages": pages_length,
+            "total":total_items,
+            "thumbnail": thumbnail
+        },
         "data": data,
     }, 200
     else:

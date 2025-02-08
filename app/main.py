@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI # type: ignore
 from app.routes import (
     anime_ID_stream_EP_extra,
     home,
@@ -13,6 +13,7 @@ from app.routes import (
     genres_GENRE,
     fyp,
     anime_ID,
+    anime_ID_relations,
     anime_ID_characters,
     anime_ID_recommended,
     anime_ID_stream,
@@ -22,6 +23,8 @@ from app.routes import (
     anime_ID_stream_external,
     clearTmp,
     listTmp,
+    clear_specific_tmp_file,
+    select_specific_tmp_file,
 )
 
 # Initialize the FastAPI application
@@ -40,6 +43,7 @@ routes = [
     genres_GENRE.router,
     fyp.router,
     anime_ID.router,
+    anime_ID_relations.router,
     anime_ID_characters.router,
     anime_ID_recommended.router,
     anime_ID_stream.router,
@@ -51,6 +55,8 @@ routes = [
     anime_ID_stream_external.router,
     clearTmp.router,
     listTmp.router,
+    clear_specific_tmp_file.router,
+    select_specific_tmp_file.router,
 ]
 
 # Include all routes in the application

@@ -7,7 +7,8 @@ def structureAnilistDetails(dataObj: dict) -> dict:
     data = dataObj.get('data', {})
     
     anime_id_ext = dataObj.get('idSub', {}).get("id_provider",{})
-    title = data['title'].get('english', data['title'].get('romaji', 'Unknown Title'))
+    title = data.get('title', {})
+    synonyms = data.get('synonyms', [])
     episodes = data.get('episodes', 0)  # Default 0 if not available
     status = data.get('status', 'UNKNOWN')
     description = data.get('description', '')
@@ -25,6 +26,7 @@ def structureAnilistDetails(dataObj: dict) -> dict:
     popularity = data.get('popularity', 0)
     average_score = data.get('averageScore', 0)
     trending = data.get('trending', 0)
+    duration = data.get('duration', 0)
 
     # Release Date
     release_date = data.get('startDate', {}).get('year', 'Unknown')
@@ -36,6 +38,13 @@ def structureAnilistDetails(dataObj: dict) -> dict:
     nextAiringEpisode = data.get('nextAiringEpisode', {})
     tags = data.get('tags', [])
     
+    # studios
+    studios = data.get('studios', {}).get("edges",None)
+    
+    # stats
+    score_distribution = data.get('stats', {}).get("scoreDistribution",[])
+    
+    
     
 
     # Create the structured object
@@ -43,9 +52,12 @@ def structureAnilistDetails(dataObj: dict) -> dict:
         'id': data['id'],
         "anime_id_ext": anime_id_ext,
         'title': title,
+        "synonyms":synonyms,
         'description': description,
         "genres": genres,
+        "studios":studios,
         'episodes': episodes,
+        "duration":duration,
         'status': status,
         'coverImage': {
             "cover_image_color": cover_image_color,
@@ -55,6 +67,7 @@ def structureAnilistDetails(dataObj: dict) -> dict:
         'format': format_type,
         'popularity': popularity,
         'averageScore': average_score,
+        "score_distribution":score_distribution,
         'trending': trending,
         'releaseDate': release_date,
         'season': {
@@ -67,6 +80,28 @@ def structureAnilistDetails(dataObj: dict) -> dict:
         'tags': tags,
         
     }
+
+    # Add structured object to the list
+
+    return structured_data
+
+
+def structureAnilistRelations(dataObj: dict) -> dict:
+    
+    # Extract necessary fields with fallback/default values
+    data = dataObj.get('data', {})
+    
+    # relations
+    relations = data.get("relations",{}).get("edges",[])
+    relationsArray = []
+    for relation in relations:
+        relationObj = relation.get("node", {})
+        relationsArray.append(relationObj)
+    
+    
+
+    # Create the structured object
+    structured_data = relationsArray
 
     # Add structured object to the list
 

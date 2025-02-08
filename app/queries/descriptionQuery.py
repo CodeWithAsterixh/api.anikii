@@ -8,6 +8,7 @@ query ($id: Int) {
       romaji
       english
     }
+    synonyms
     description
     season
     seasonYear
@@ -28,6 +29,7 @@ query ($id: Int) {
     episodes
     updatedAt
     format
+    duration
     startDate{
       year
     }
@@ -35,7 +37,13 @@ query ($id: Int) {
       airingAt
       timeUntilAiring
       episode
-    } 
+    }
+    stats{
+      scoreDistribution{
+        score
+        amount
+      }
+    }
     tags{
       rank
       id
@@ -44,6 +52,13 @@ query ($id: Int) {
       category
     }
     genres
+    studios(isMain: true){
+      edges{
+        node{
+          name
+        }
+      }
+    }
   }
 }
 '''

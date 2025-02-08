@@ -1,5 +1,6 @@
 import os
 import json
+import time
 
 def jsonLoad(fileName: str) -> dict:
     """
@@ -18,6 +19,50 @@ def jsonLoad(fileName: str) -> dict:
         try:
             with open(json_path, "r") as file:
                 return json.load(file)
+        except json.JSONDecodeError:
+            print("Error: JSON file is corrupted. Returning empty data.")
+            return {}
+    return {}
+
+
+def jsonLoadMeta(fileName: str) -> dict:
+    """
+    Loads meta data from a JSON file if it exists; otherwise, returns an empty dictionary.
+
+    Args:
+        fileName (str): The name of the JSON file (without extension).
+
+    Returns:
+        dict: The data from the JSON file or an empty dictionary if the file doesn't exist.
+    """
+    json_path = f"/tmp/anikii/{fileName}.json"
+    print(f"Loading data from {json_path}")
+
+    if os.path.exists(json_path):
+        try:
+            file_size = os.path.getsize(json_path)
+            file_size = round(file_size/1024,2)
+            # time stamps
+            creation_time = os.path.getctime(json_path)
+            modification_time = os.path.getmtime(json_path)
+            access_time = os.path.getatime(json_path)
+            
+            # times to readable format
+            
+            creation_time = time.ctime(creation_time)
+            modification_time = time.ctime(modification_time)
+            access_time = time.ctime(access_time)
+            
+            # o
+            
+            return {
+                "file_size":file_size,
+                "creation_time":creation_time,
+                "modification_time":modification_time,
+                "access_time":access_time,
+                "name": f"{fileName}.json",
+                "type": "json",                
+            }
         except json.JSONDecodeError:
             print("Error: JSON file is corrupted. Returning empty data.")
             return {}

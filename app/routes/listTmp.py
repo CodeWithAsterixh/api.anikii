@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter # type: ignore
 from app.helpers.json.getTmpLs import  get_files_with_prefix
 
 

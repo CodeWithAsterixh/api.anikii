@@ -11,6 +11,7 @@ from .genreItemQuery import GENRE_ITEM
 from .fypQuery import FYP
 from .trailerQuery import TRAILERS
 from .upcomingQuery import UPCOMING
+from .mediaRelationQuery import RELATIONS
 
 
 
@@ -22,6 +23,9 @@ class QueryManager:
             },
             "description": {
                 "get_descriptions": DESCRIPTIONS,
+            },
+            "relations": {
+                "get_relations": RELATIONS,
             },
             "genres": {
                 "get_genres": GENRES,

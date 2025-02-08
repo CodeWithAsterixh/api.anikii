@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter # type: ignore
 from app.helpers.json.clearTmp import clear_anikii_route
 
 

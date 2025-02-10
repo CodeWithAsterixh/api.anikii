@@ -39,7 +39,12 @@ def structureAnilistDetails(dataObj: dict) -> dict:
     tags = data.get('tags', [])
     
     # studios
-    studios = data.get('studios', {}).get("edges",None)
+    studios = data.get('studios', {}).get("edges",[])
+    studiosList = []
+    for node in studios:
+        studio = node.get("node",{}).get("name",None)
+        if studio:
+            studiosList.append(studio)
     
     # stats
     score_distribution = data.get('stats', {}).get("scoreDistribution",[])
@@ -55,7 +60,7 @@ def structureAnilistDetails(dataObj: dict) -> dict:
         "synonyms":synonyms,
         'description': description,
         "genres": genres,
-        "studios":studios,
+        "studios":studiosList,
         'episodes': episodes,
         "duration":duration,
         'status': status,

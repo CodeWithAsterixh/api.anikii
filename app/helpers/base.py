@@ -1,0 +1,1 @@
+BASEURL="https://ww24.gogoanimes.fi"

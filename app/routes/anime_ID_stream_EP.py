@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from app.helpers.fetchHelpers import make_api_request
-from app.queries.query_manager import query_manager
 from app.helpers.streamInfoSc import parse_streaming_info
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
+from app.helpers.base import BASEURL
+
 import requests
 
 router = APIRouter(prefix="/anime", tags=["id", "ep"])
@@ -16,7 +16,7 @@ async def fetch_streaming_info(id: int, ep: int):
         gogoSub = idSub["id_provider"]["idGogo"]
 
         # Construct URLs for sub and dub episodes
-        urlSub = f"https://anitaku.bz/{gogoSub}-episode-{ep}"
+        urlSub = f"{BASEURL}/{gogoSub}-episode-{ep}"
 
         # Initialize result containers
         episode_dataSub = {}

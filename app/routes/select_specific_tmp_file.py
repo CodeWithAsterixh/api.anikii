@@ -46,7 +46,7 @@ async def clearTmpSpecific(name:str):
         total_items = len(data)
         if total_items > 0 and not isinstance(data[0], str):
             thumbnail = data[0].get("coverImage",{}).get("cover_image",None)
-        
+    
     if not isinstance(data, list) and data.get("pages"):
         pages_length = len(data["pages"])
         # Step 1: Get all pages and sort them numerically
@@ -61,7 +61,8 @@ async def clearTmpSpecific(name:str):
         # Step 4: Calculate total number of items in all pages
         total_items = sum(len(items) for items in data["pages"].values())
         thumbnail = first_item.get("coverImage",{}).get("cover_image",None)
-
+    if not isinstance(data, list) and not data.get("pages"):
+        thumbnail = data.get("coverImage",{}).get("cover_image",None)
 
     result = {
     "message": f"{formatted_name} is available",

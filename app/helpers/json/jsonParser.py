@@ -61,7 +61,7 @@ def jsonLoadMeta(fileName: str) -> dict:
                 "modification_time":modification_time,
                 "access_time":access_time,
                 "name": f"{fileName}.json",
-                "type": "json",                
+                "type": "json",          
             }
         except json.JSONDecodeError:
             print("Error: JSON file is corrupted. Returning empty data.")

@@ -1,4 +1,7 @@
 from fastapi import FastAPI # type: ignore
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
 from app.routes import (
     anime_ID_stream_EP_extra,
     home,
@@ -25,10 +28,26 @@ from app.routes import (
     listTmp,
     clear_specific_tmp_file,
     select_specific_tmp_file,
+    save_data,
+    deleteFromDb
 )
+
+
+
+#load environment
+load_dotenv()
 
 # Initialize the FastAPI application
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000","http://localhost:5173","https://anikii.vercel.app","https://archive-anikii.vercel.app"],  # Allow only frontend origin
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allow all headers
+)
 
 # Route configurations
 routes = [
@@ -57,7 +76,10 @@ routes = [
     listTmp.router,
     clear_specific_tmp_file.router,
     select_specific_tmp_file.router,
+    save_data.router,
+    deleteFromDb.router
 ]
+
 
 # Include all routes in the application
 for route in routes:

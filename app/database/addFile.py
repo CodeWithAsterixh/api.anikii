@@ -9,8 +9,13 @@ def addToDb(fileName:str, data:dict|list):
             "name": fileName,
             "data":data
         })
-    
-    
+
+
+def updateInDb(fileName:str, data:dict|list):
+    collection_name.update_one({
+        "name": fileName,
+    }, data,upsert=True)
+
 
 def findFileByName(name:str):
     return collection_name.find_one({"name": name})

@@ -1,7 +1,7 @@
 from app.helpers.json.jsonParser import jsonLoad,jsonSave
 from app.helpers.json.pageLocator import ensure_page_exists
 from app.structure.listItem import structureAnilistArray
-
+from app.database.addFile import findFileByName, updateInDb
 
 def runCacheData(page: int|None, filePath: str):
     """
@@ -41,6 +41,11 @@ def saveCacheData(pageInfo:dict, media:list, filePath: str, page:int):
         "lastPage": lastPage,
         "currentPage": page
     }
+    findDb = findFileByName(f"{filePath}.json")
+    if(findDb):
+        updateInDb(f"{filePath}.json", {"$set": { f"data.pages.{page}": structuredData }})
+        print("up-db")
+    
     jsonSave(filePath,page,{"lastPage":lastPage,"data":structuredData})
     return{
         "pageInfo":pageInfo,

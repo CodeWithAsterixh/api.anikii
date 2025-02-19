@@ -114,7 +114,7 @@ def jsonSave(fileName: str, page: int, new_items: dict) -> dict:
     try:
         with open(json_path, "w") as file:
             json.dump(data, file, indent=4)
-        print(f"Updated page {page} successfully.")
+        print("up-tmp")
         return data
     except Exception as e:
         print(f"Error writing to JSON file: {e}")
@@ -138,7 +138,8 @@ def jsonWrite(fileName: str, content):
     os.makedirs(directory, exist_ok=True)
 
     json_path = os.path.join(directory, f"{fileName}.json")
-    print(f"Saving data to {json_path}")
+    print("sv-tmp")
+
 
     # Load existing data if available
     existing_data = jsonLoad(fileName)
@@ -147,7 +148,8 @@ def jsonWrite(fileName: str, content):
     try:
         with open(json_path, "w") as file:
             json.dump(content, file, indent=4)
-        print(f"Updated content successfully.")
+        print("up-tmp")
+
         return content
     except Exception as e:
         print(f"Error writing to JSON file: {e}")

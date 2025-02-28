@@ -1,11 +1,9 @@
-# Use an official lightweight Python image
 FROM python:3.10-slim
 
-# Install required tools
-RUN apt-get update && apt-get install -y wget tar unzip && rm -rf /var/lib/apt/lists/*
+# Install required packages: wget, tar, and xz-utils for extracting .tar.xz files
+RUN apt-get update && apt-get install -y wget tar xz-utils && rm -rf /var/lib/apt/lists/*
 
-# Download and extract a statically linked ffmpeg binary.
-# (Make sure the URL points to a valid static build for your platform.)
+# Download and extract a static ffmpeg binary.
 RUN wget -O ffmpeg.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz && \
     mkdir /ffmpeg && \
     tar -xJf ffmpeg.tar.xz -C /ffmpeg --strip-components=1 && \
@@ -14,16 +12,14 @@ RUN wget -O ffmpeg.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-relea
     chmod +x /usr/local/bin/ffmpeg && \
     rm -rf /ffmpeg
 
-# Copy your application requirements and install them
+# Copy and install requirements.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy your FastAPI application code into the image
+# Copy the application code.
 COPY . /app
 WORKDIR /app
 
-# Expose the port your app will run on
 EXPOSE 8080
 
-# Command to run your application using Uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

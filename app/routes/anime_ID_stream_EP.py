@@ -3,12 +3,10 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import asyncio
-import subprocess
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 import urllib3
 from typing import Optional
-import ffmpeg  # ffmpeg-python library
 
 # Disable SSL warnings (for testing; in production configure certificates properly)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -41,16 +39,9 @@ async def fetch_streaming_info(id: int, ep: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
-# Download endpoint with optional resolution parameter (360-1080).
+# Download endpoint that streams the original video and returns its original size.
 @router.get("/{id}/stream/ep/{ep}/download")
-async def download_streaming_video(
-    id: int, 
-    ep: int, 
-    resolution: Optional[int] = Query(
-        None, ge=360, le=1080, 
-        description="Desired video height in pixels (e.g., 360, 480, 720, or 1080). If not provided, original quality is streamed."
-    )
-):
+async def download_streaming_video(id: int, ep: int):
     try:
         # Fetch provider data and build URL for the episode.
         idSub = await fetch_malsyn_data_and_get_provider(id)
@@ -82,62 +73,29 @@ async def download_streaming_video(
             "Referer": mp4upload_link
         }
         
-        if resolution is not None:
-            # Use ffmpeg-python to transcode on the fly to the desired resolution.
-            # We pass HTTP headers to ffmpeg via the "headers" parameter.
-            try:
-                # Construct a headers string (each header separated by CRLF).
-                ffmpeg_headers = f"User-Agent: {USER_AGENT}\r\nReferer: {mp4upload_link}\r\n"
-                process = (
-                    ffmpeg
-                    .input(video_url, headers=ffmpeg_headers)
-                    .filter('scale', -2, resolution)
-                    .output('pipe:1', format='mp4', vcodec='libx264', preset='fast', video_bitrate='800k', acodec='aac', audio_bitrate='128k')
-                    .run_async(pipe_stdout=True, pipe_stderr=True)
-                )
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Error starting ffmpeg-python: {e}")
-            
-            def iter_transcoded():
-                try:
-                    while True:
-                        chunk = process.stdout.read(8192)
-                        if not chunk:
-                            break
-                        yield chunk
-                finally:
-                    process.stdout.close()
-                    process.wait()
-            
-            return StreamingResponse(
-                iter_transcoded(),
-                media_type="video/mp4",
-                headers={"Content-Disposition": f"attachment; filename=video_{resolution}.mp4"}
-            )
-        else:
-            # Stream the original video without transcoding.
-            try:
-                r = requests.get(video_url, headers=headers, stream=True, timeout=30, verify=False)
-                r.raise_for_status()
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Error fetching video: {e}")
+        # Stream the original video without transcoding.
+        try:
+            r = requests.get(video_url, headers=headers, stream=True, timeout=30, verify=False)
+            r.raise_for_status()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error fetching video: {e}")
 
-            # Include Content-Length header if available.
-            content_length = r.headers.get("Content-Length")
-            extra_headers = {"Content-Disposition": "attachment; filename=video.mp4"}
-            if content_length:
-                extra_headers["Content-Length"] = content_length
+        # Include Content-Length header if available.
+        content_length = r.headers.get("Content-Length")
+        extra_headers = {"Content-Disposition": "attachment; filename=video.mp4"}
+        if content_length:
+            extra_headers["Content-Length"] = content_length
 
-            def iter_content():
-                for chunk in r.iter_content(chunk_size=8192):
-                    if chunk:
-                        yield chunk
+        def iter_content():
+            for chunk in r.iter_content(chunk_size=8192):
+                if chunk:
+                    yield chunk
 
-            return StreamingResponse(
-                iter_content(),
-                media_type=r.headers.get("Content-Type", "application/octet-stream"),
-                headers=extra_headers
-            )
+        return StreamingResponse(
+            iter_content(),
+            media_type=r.headers.get("Content-Type", "application/octet-stream"),
+            headers=extra_headers
+        )
         
     except requests.exceptions.RequestException as e:
         raise HTTPException(status_code=500, detail=f"Request error: {str(e)}")

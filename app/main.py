@@ -24,12 +24,10 @@ from app.routes import (
     anime_ID_stream_EP_dub,
     anime_ID_trailers,
     anime_ID_stream_external,
-    clearTmp,
-    listTmp,
     clear_specific_tmp_file,
     select_specific_tmp_file,
     save_data,
-    deleteFromDb
+    savedDatas
 )
 
 
@@ -72,12 +70,10 @@ routes = [
     anime_ID_trailers.router,
     popular_upcoming.router,
     anime_ID_stream_external.router,
-    clearTmp.router,
-    listTmp.router,
+    savedDatas.router,
     clear_specific_tmp_file.router,
     select_specific_tmp_file.router,
     save_data.router,
-    deleteFromDb.router
 ]
 
 

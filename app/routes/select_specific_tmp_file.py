@@ -1,8 +1,11 @@
 from fastapi import APIRouter # type: ignore
 from app.helpers.json.getTmpLs import  get_files_with_prefix
+from app.helpers.json.clearTmp import delete_specific_file
 from app.helpers.json.jsonParser import jsonLoad,jsonLoadMeta
 from app.helpers.json.jsonFormatRaw import generate_metadata
 from app.database.addFile import findFileByName
+from app.database.deleteFile import DeleteDb
+from app.database.collection import collection_name
 
 
 
@@ -10,7 +13,7 @@ router = APIRouter(prefix="/listTmp", tags=["name"])
 
 
 @router.get("/{name}")
-async def clearTmpSpecific(name:str):
+async def getTmpSpecific(name:str, storage:str="local"):
     available_files = get_files_with_prefix()
     formatted_name = name
     data = {}
@@ -18,29 +21,26 @@ async def clearTmpSpecific(name:str):
     pages_length = 0
     total_items = 0
     thumbnail = None
-    gotten_from = "temp"
+    gotten_from = storage
            
     if ".json" in formatted_name:
         formatted_name = name.replace(".json", "")
         
-        
     foundDbData = findFileByName(f"{formatted_name}.json")
-    if foundDbData:
+    if storage == "db" and foundDbData:
         data = foundDbData.get("data",{})
         meta = {
             **generate_metadata(data),
             "name": f"{formatted_name}.json",
             "type": "json"
         }
-        gotten_from = "db"
         
         
         
     
-    elif f"{formatted_name}.json" in available_files:
+    elif storage == "local" and f"{formatted_name}.json" in available_files:
         data = jsonLoad(formatted_name)
         meta = jsonLoadMeta(formatted_name)
-        gotten_from = "temp"
         
     if isinstance(data, list):
         total_items = len(data)
@@ -82,8 +82,34 @@ async def clearTmpSpecific(name:str):
     
     
     return {
-        "message": f"{formatted_name} is not available",
+        "message": f"{formatted_name} is not available in {storage} storage",
         "data": {}
-    }, 200
+    }, 404
+
+
+
+@router.delete("/{name}")
+async def clearTmpSpecific(name:str, storage:str="local"):
+    formatted_name = name
+    deleted = False
+    if ".json" not in formatted_name:
+        formatted_name = f"{formatted_name}.json"
+        
+    if storage == "local":
+        deleted = delete_specific_file(formatted_name)
+        
+    elif storage == "db":
+        deleted = DeleteDb(formatted_name)
+                
+    if deleted:
+        return{
+            "message": f"{formatted_name} has been deleted from {storage} storage",
+            "data": {}
+        }, 200
+    
+    return {
+        "message": f"{formatted_name} is not available in {storage} storage",
+        "data": {}
+    }, 404
 
 

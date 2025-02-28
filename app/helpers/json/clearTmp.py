@@ -40,13 +40,10 @@ def delete_specific_file( filename="",directory="/tmp/anikii"):
     file_path = os.path.join(directory, filename)
 
     if not os.path.exists(file_path):
-        print(f"File '{file_path}' does not exist.")
         return False
 
     try:
         os.unlink(file_path)  # Remove the file
-        print(f"Deleted: {file_path}")
         return True
     except Exception as e:
-        print(f"Failed to delete {file_path}: {e}")
         return False

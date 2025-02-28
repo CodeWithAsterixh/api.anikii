@@ -13,7 +13,6 @@ async def fetch_streaming_info(id: int, ep: int):
 
         # Fetch provider data (sub and dub IDs)
         idSub = await fetch_malsyn_data_and_get_provider(id)
-        print(1)
         gogoDub = idSub["id_provider"]["idGogoDub"]
 
         # Construct URLs for sub and dub episodes

@@ -9,7 +9,7 @@ from app.database.collection import collection_name
 
 
 
-router = APIRouter(prefix="/listTmp", tags=["name"])
+router = APIRouter(prefix="/saved", tags=["name"])
 
 
 @router.get("/{name}")

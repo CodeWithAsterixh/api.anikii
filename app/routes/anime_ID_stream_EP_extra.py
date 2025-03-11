@@ -29,28 +29,42 @@ async def fetch_streaming_info(id: int, ep: int):
 
         data = response["data"]["Media"]
         
+        
+        
         # extra info
-        index = 0
-        if ep - 1 >= 0 and ep - 1 < len(data["streamingEpisodes"]):
-            index = ep-1
-        else:
+        print("still working", data)
+        title = ''
+        thumbnail = ''
+        if len(data["streamingEpisodes"]) > 0:
             index = 0
-        title = data["streamingEpisodes"][index]["title"]
-        thumbnail = data["streamingEpisodes"][index]["thumbnail"]
+            if ep - 1 >= 0 and ep - 1 < len(data["streamingEpisodes"]):
+                index = ep-1
+            else:
+                index = 0
+            title = data["streamingEpisodes"][index]["title"]
+            thumbnail = data["streamingEpisodes"][index]["thumbnail"]
+        
 
         # Fetch the Zoro ID
         idSub = await fetch_malsyn_data_and_get_provider(id)
         gogoId = idSub.get("id_provider", {}).get("idGogo")
         gogoIdDub = idSub.get("id_provider", {}).get("idGogoDub")
-        if not gogoId or not gogoIdDub:
-            raise HTTPException(status_code=404, detail="ID not found")
+        
 
         # Generate episode data for sub and dub
-        try:
-            episode_sub = await get_episode(gogoId, ep)
-            episode_dub = await get_episode(gogoIdDub, ep)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error fetching episodes: {str(e)}")
+        episode_sub = {}
+        episode_dub = {}
+        
+        if gogoId:
+            try:
+                episode_sub = await get_episode(gogoId, ep)
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Error fetching episodes: {str(e)}")
+        if gogoIdDub:
+            try:
+                episode_dub = await get_episode(gogoIdDub, ep)
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Error fetching episodes: {str(e)}")
 
         # Combine results into response object
         result = {

@@ -1,6 +1,8 @@
 import requests
 from fastapi import HTTPException
 import urllib3
+from app.helpers.getEpM3u8BasedGogo import get_episode
+
 
 # Disable SSL warnings (for testing; in production configure certificates properly)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -31,10 +33,25 @@ async def get_episode_data(id: int, ep: int, type: str = "sub"):
             raise HTTPException(status_code=400, detail="Invalid type parameter")
         
         url = f"{BASEURL}/{gogoId}-episode-{ep}"
+        
+        
+
         # Parse the streaming info from the URL.
         if gogoId:
             data = parse_streaming_info(url)
-            return data
+            episode_extra = await get_episode(gogoId, ep)
+            stream_links = [
+                *data.stream_links,
+                {
+                    "name":"vidcdn",
+                    "url":episode_extra.get("servers",{}).get("vidcdn",None)
+                }
+            ]
+            return {
+                "anime_info":data.anime_info,
+                "episode_info":data.episode_info,
+                "stream_links":stream_links,
+            }
         return None
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 404:

@@ -8,7 +8,7 @@ router = APIRouter()
 async def home():
     # Message array split by periods
     message = [
-        "Hello, there! Welcome to the Anikii API.",
+        "Hello, there! Welcome to the Anikii API service.",
         "See the available endpoints below to get data.",
         "Please maintain orderliness and respect while using this API.",
         "Please don't use the API for negative or harmful purposes."
@@ -17,7 +17,7 @@ async def home():
     # Terms of Use and Code of Conduct
     terms_of_use = [
         "By using this API, you agree to comply with the Terms of Service and Code of Conduct.",
-        "You are expected to use the data responsibly and respect the platform and community.",
+        "You are expected to use the data responsibly and respect the platform.",
         "Any misuse or abuse of the API may lead to suspension or banning of your access."
     ]
     
@@ -32,9 +32,11 @@ async def home():
         {"endpoint": "/anime/{id}/recommended", "description": "Fetch recommended anime based on the anime ID. Includes a page query (?page=number)."},
         {"endpoint": "/anime/{id}/stream", "description": "Fetch streaming info for a specific anime."},
         {"endpoint": "/anime/{id}/stream/{ep}", "description": "Fetch streaming episode sub links for a specific anime."},
-        {"endpoint": "/anime/{id}/stream/{ep}/dub", "description": "Fetch streaming episode dub links for a specific anime."},
-        {"endpoint": "/anime/{id}/stream/{ep}/extra", "description": "Fetch extra streaming information for a specific anime episode."},
-        {"endpoint": "/anime/{id}/stream/external", "description": "Fetch external streaming links for a specific anime."},
+        {"endpoint": "/anime/{id}/stream/{ep}?type=dub", "description": "Fetch streaming episode dub links for a specific anime."},
+        {"endpoint": "/anime/{id}/stream/{ep}/live", "description": "Live stream subbed video of anime if available."},
+        {"endpoint": "/anime/{id}/stream/{ep}/live?type=dub", "description": "Live stream dubbed video of anime if available."},
+        {"endpoint": "/anime/{id}/stream/{ep}/download", "description": "Download subbed video of anime if available."},
+        {"endpoint": "/anime/{id}/stream/{ep}/download?type=dub", "description": "Download dubbed video of anime if available."},
         {"endpoint": "/genres", "description": "Fetch all genres. Includes a page query (?page=number)."},
         {"endpoint": "/genres/{genre}", "description": "Fetch anime by genre. Includes a page query (?page=number)."},
         {"endpoint": "/popular/releases/", "description": "Fetch popular releases. Includes a page query (?page=number)."},

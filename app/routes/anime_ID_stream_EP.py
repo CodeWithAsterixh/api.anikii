@@ -56,7 +56,7 @@ async def download_streaming_video(id: int, ep: int, type: str = Query("sub", de
     
     # Include the Content-Length header if available.
     content_length = r.headers.get("Content-Length")
-    extra_headers = {"Content-Disposition": f"attachment; filename={episode_data["episode_info"]["title"]}.mp4"}
+    extra_headers = {"Content-Disposition": f"attachment; filename={episode_data['episode_info']['title']}.mp4"}
     if content_length:
         extra_headers["Content-Length"] = content_length
 

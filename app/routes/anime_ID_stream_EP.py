@@ -34,7 +34,7 @@ async def download_streaming_video(id: int, ep: int, type: str = Query("sub", de
         return {"error": "Episode not found"}, 404
     
     # Extract the mp4upload link from the stream_links list.
-    mp4upload_link = next((link.url for link in episode_data.stream_links if link.name == "mp4upload"), None)
+    mp4upload_link = next((link.url for link in episode_data["stream_links"] if link.name == "mp4upload"), None)
     if not mp4upload_link:
         raise HTTPException(status_code=404, detail="mp4upload link not found")
     
@@ -56,7 +56,7 @@ async def download_streaming_video(id: int, ep: int, type: str = Query("sub", de
     
     # Include the Content-Length header if available.
     content_length = r.headers.get("Content-Length")
-    extra_headers = {"Content-Disposition": "attachment; filename=video.mp4"}
+    extra_headers = {"Content-Disposition": f"attachment; filename={episode_data["episode_info"]["title"]}.mp4"}
     if content_length:
         extra_headers["Content-Length"] = content_length
 
@@ -78,10 +78,9 @@ async def live_streaming_video(id: int, ep: int, type: str = Query("sub", descri
     if not episode_data:
         return {"error": "Episode not found"}, 404
     # Extract the mp4upload link.
-    mp4upload_link = next((link.url for link in episode_data.stream_links if link.name == "mp4upload"), None)
+    mp4upload_link = next((link.url for link in episode_data["stream_links"] if link.name == "mp4upload"), None)
     if not mp4upload_link:
         raise HTTPException(status_code=404, detail="mp4upload link not found")
-    
     video_url = await getVid(mp4upload_link)
     if not video_url:
         raise HTTPException(status_code=500, detail="Failed to extract video URL")

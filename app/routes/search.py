@@ -1,44 +1,22 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Query, Request
 import requests
-from app.helpers.fetchHelpers import make_api_request
-from app.queries.query_manager import query_manager
-from app.structure.listItem import structureAnilistArray
+from typing import Any, Dict, List
+from app.services.anilist_service import fetch_search
+from app.models.responses import AnimeItem
+from app.helpers.response_envelope import success_response, error_response
 
 router = APIRouter()
 
 @router.get("/search")
-def search(keyword: str):
+def search(request: Request, keyword: str = Query(..., min_length=1, max_length=100)) -> Dict[str, Any]:
     try:
-        # Retrieve the query string using the query manager
-        query = query_manager.get_query("search", "search_media")        
-        # Define the variables
-        variables = {"search": keyword}
-
-        # Prepare the body for the API request
-        body = {
-            "query": query,
-            "variables": variables
-        }
-
-        # Make the API request
-        response = make_api_request(body)  # Assuming make_api_request returns a response object
-
-        # Check for errors in the response
-        if response.get("errors"):
-            return {"error": response["errors"]}, 500
-        
-        
-        
-        data = response["data"]["Page"]["media"]
-        structuredData = structureAnilistArray(data)
-
-        # Return the parsed result as JSON
-        return structuredData, 200
-
+        structuredData = fetch_search(keyword)
+        meta = {"search": {"keyword": keyword, "count": len(structuredData)}}
+        return success_response(request, data=structuredData, meta=meta)
     except requests.exceptions.RequestException as e:
-        # Handle any error with the request
-        return {"error": str(e)}, 500
-
+        return error_response(request, status_code=500, message=str(e), error=str(e))
+    except RuntimeError as e:
+        # Handle AniList GraphQL errors raised by the service
+        return error_response(request, status_code=500, message=str(e), error=str(e))
     except Exception as e:
-        # Handle any unforeseen error
-        return {"error": str(e)}, 500
+        return error_response(request, status_code=500, message=str(e), error=str(e))

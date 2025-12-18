@@ -1,50 +1,24 @@
-from fastapi import APIRouter, HTTPException
-from app.helpers.fetchHelpers import make_api_request
-from app.queries.query_manager import query_manager
-from app.structure.listItem import structureAnilistItem
+from fastapi import APIRouter, HTTPException, Path, Query, Request
 import requests
+from typing import Any, Dict
+from app.services.anilist_service import fetch_recommended
+from app.helpers.response_envelope import success_response, error_response
 
-router = APIRouter(prefix="/anime", tags=["id"])
+router = APIRouter(prefix="/anime", tags=["recommended"])
 
 @router.get("/{id}/recommended")
-def popular(id:int, page:int=1):
+async def animeRecommended(
+    request: Request,
+    id: int = Path(..., ge=1),
+    page: int = Query(1, ge=1, le=50)
+) -> Dict[str, Any]:
     try:
-        # Retrieve the query string using the query manager
-        query = query_manager.get_query("recommended", "get_recommended")        
-        # Define the variables
-        variables = {"id": id,"page":page}
-
-        # Prepare the body for the API request
-        body = {
-            "query": query,
-            "variables": variables
-        }
-
-        # Make the API request
-        response = make_api_request(body)  # Assuming make_api_request returns a response object
-        
-        if response.get("errors"):
-            raise HTTPException(status_code=500, detail=response["errors"])
-        
-        media = response["data"]["Media"]
-        nodes = media["recommendations"]["nodes"]
-        pageInfo = media["recommendations"]["pageInfo"]
-        
-        
-        # recommendations = structureAnilistArray(nodes)
-        nodesArray = []
-        for node in nodes:
-            structureData = structureAnilistItem(node.get("mediaRecommendation"))
-            nodesArray.append(structureData)
-
-        
-        # Return the parsed result as JSON
-        return {"pageInfo":pageInfo,"recommendations":nodesArray }, 200
-
+        recommended = fetch_recommended(id, page)
+        meta = {"anime": {"id": id}, "pagination": recommended.get("pageInfo")}
+        return success_response(request, data=recommended.get("recommendations"), meta=meta)
     except requests.exceptions.RequestException as e:
-        # Handle any error with the request
-        return {"error": str(e)}, 500
-
+        return error_response(request, status_code=500, message=str(e), error=str(e))
+    except RuntimeError as e:
+        return error_response(request, status_code=500, message=str(e), error=str(e))
     except Exception as e:
-        # Handle any unforeseen error
-        return {"error": str(e)}, 500
+        return error_response(request, status_code=500, message=str(e), error=str(e))

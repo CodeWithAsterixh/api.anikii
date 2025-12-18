@@ -1,49 +1,23 @@
-from fastapi import APIRouter,HTTPException
-from app.helpers.fetchHelpers import make_api_request
-from app.queries.query_manager import query_manager
+from fastapi import APIRouter, HTTPException, Path, Request
+import requests
+from typing import Any, Dict
+from app.services.anilist_service import fetch_anime_details
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
 from app.structure.details import structureAnilistDetails
-import requests
+from app.helpers.response_envelope import success_response, error_response
 
 router = APIRouter(prefix="/anime", tags=["id"])
 
 @router.get("/{id}")
-async def animeInfo(id:int):
+async def animeInfo(request: Request, id: int = Path(..., ge=1)) -> Dict[str, Any]:
     try:
-        # Retrieve the query string using the query manager
-        query = query_manager.get_query("description", "get_descriptions")        
-        # Define the variables
-        variables = {"id": id}
-
-        # Prepare the body for the API request
-        body = {
-            "query": query,
-            "variables": variables
-        }
-
-        # Make the API request
-        response = make_api_request(body)  # Assuming make_api_request returns a response object
-        if response.get("errors"):
-            raise HTTPException(status_code=500, detail=response["errors"])
-        data = response["data"]["Media"]
+        data = fetch_anime_details(id)
         idSub = await fetch_malsyn_data_and_get_provider(data["id"])
-
-        # Check for errors in the response
-        if response.get("errors"):
-            return {"error": response["errors"]}, 500
-        
-        detailsData = structureAnilistDetails({
-                    "data": data,
-                    "idSub": idSub
-                })
-
-        # Return the parsed result as JSON
-        return detailsData, 200
-
+        detailsData = structureAnilistDetails({"data": data, "idSub": idSub})
+        return success_response(request, data=detailsData)
     except requests.exceptions.RequestException as e:
-        # Handle any error with the request
-        return {"error": str(e)}, 500
-
+        return error_response(request, status_code=500, message="Request error", error=str(e))
+    except RuntimeError as e:
+        return error_response(request, status_code=500, message="Runtime error", error=str(e))
     except Exception as e:
-        # Handle any unforeseen error
-        return {"error": str(e)}, 500
+        return error_response(request, status_code=500, message="Unexpected error", error=str(e))

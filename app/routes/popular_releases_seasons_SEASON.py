@@ -1,19 +1,21 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from app.helpers.fetchHelpers import make_api_request
 from app.helpers.timeFunction import this_when, get_current_season, available_seasons
 from app.queries.query_manager import query_manager
 from app.helpers.json.cacheData import runCacheData,saveCacheData
+from app.helpers.response_envelope import success_response, error_response
 
 import requests
 
 router = APIRouter(prefix="/popular/releases/seasons", tags=["season"])
 
 @router.get("/{season}")
-def popular_releases_seasons_SEASON(season: str, page: int=1):
+def popular_releases_seasons_SEASON(request: Request, season: str, page: int=1):
     try:
         cacheDataAvailable = runCacheData(page,f"popular_releases_seasons_{season}")
         if cacheDataAvailable:
-            return cacheDataAvailable
+            meta = {"pagination": cacheDataAvailable.get("pageInfo")}
+            return success_response(request, data=cacheDataAvailable.get("data"), meta=meta)
         # Retrieve the query string using the query manager
         query = query_manager.get_query("releases", "get_releases")
 
@@ -28,7 +30,7 @@ def popular_releases_seasons_SEASON(season: str, page: int=1):
         variables = {
             "page": page,
             "season": season,
-            "year": this_when.year,  # Ensure this_when() is used to get the year
+            "year": this_when.year,
         }
 
         # Prepare the body for the API request
@@ -38,23 +40,21 @@ def popular_releases_seasons_SEASON(season: str, page: int=1):
         }
 
         # Make the API request
-        response = make_api_request(body)  # Assuming make_api_request returns a response object
+        response = make_api_request(body)
 
         # Check for errors in the response
         if "errors" in response:
-            return {"error": response["errors"]}, 500
+            return error_response(request, status_code=500, message="AniList error", error=response["errors"])
 
         media = response["data"]["Page"]["media"]
         pageInfo = response["data"]["Page"]["pageInfo"]
         
         data = saveCacheData(pageInfo, media, f"popular_releases_seasons_{season}", page)
-        # Return the parsed result as JSON
-        return data, 200
+        meta = {"pagination": pageInfo}
+        return success_response(request, data=media, meta=meta)
 
     except requests.exceptions.RequestException as e:
-        # Handle request-specific errors (e.g., network, timeout)
-        return {"error": f"Request error: {str(e)}"}, 500
+        return error_response(request, status_code=500, message="Request error", error=str(e))
 
     except Exception as e:
-        # Handle any unforeseen error
-        return {"error": f"An unexpected error occurred: {str(e)}"}, 500
+        return error_response(request, status_code=500, message="Unexpected error", error=str(e))

@@ -1,18 +1,20 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 import requests
 from app.helpers.fetchHelpers import make_api_request
 from app.helpers.timeFunction import this_when, get_current_season
 from app.queries.query_manager import query_manager
 from app.helpers.json.cacheData import runCacheData,saveCacheData
+from app.helpers.response_envelope import success_response, error_response
 
 router = APIRouter()
 
 @router.get("/popular/releases/seasons")
-def popular_releases_seasons(page: int=1):
+def popular_releases_seasons(request: Request, page: int=1):
     try:
         cacheDataAvailable = runCacheData(page,"popular_releases_seasons")
         if cacheDataAvailable:
-            return cacheDataAvailable
+            meta = {"pagination": cacheDataAvailable.get("pageInfo")}
+            return success_response(request, data=cacheDataAvailable.get("data"), meta=meta)
         # Retrieve the query string using the query manager
         query = query_manager.get_query("releases", "get_releases")        
         # Define the variables
@@ -29,23 +31,21 @@ def popular_releases_seasons(page: int=1):
         }
 
         # Make the API request
-        response = make_api_request(body)  # Assuming make_api_request returns a response object
+        response = make_api_request(body)
 
         # Check for errors in the response
         if response.get("errors"):
-            return {"error": response["errors"]}, 500
+            return error_response(request, status_code=500, message="AniList error", error=response["errors"])
 
         media = response["data"]["Page"]["media"]
         pageInfo = response["data"]["Page"]["pageInfo"]
         
         data = saveCacheData(pageInfo, media, "popular_releases_seasons", page)
-        # Return the parsed result as JSON
-        return data, 200
+        meta = {"pagination": pageInfo}
+        return success_response(request, data=media, meta=meta)
 
     except requests.exceptions.RequestException as e:
-        # Handle any error with the request
-        return {"error": str(e)}, 500
+        return error_response(request, status_code=500, message="Request error", error=str(e))
 
     except Exception as e:
-        # Handle any unforeseen error
-        return {"error": str(e)}, 500
+        return error_response(request, status_code=500, message="Unexpected error", error=str(e))

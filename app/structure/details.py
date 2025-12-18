@@ -1,5 +1,6 @@
 import random
 from app.helpers.formatAgeRange import format_range
+from app.helpers.base import slugify_anikii
 
 def structureAnilistDetails(dataObj: dict) -> dict:
     
@@ -15,6 +16,14 @@ def structureAnilistDetails(dataObj: dict) -> dict:
     genres = data.get('genres', [])
     cover_image = data['coverImage'].get('extraLarge', '')  # Default empty string
     banner_image = data.get('bannerImage', '')  # Default empty string
+    
+    # Compute custom anikii ids from english and romaji titles
+    english_title = title.get('english') or ''
+    romaji_title = title.get('romaji') or ''
+    anikii_id_eng = slugify_anikii(english_title) if english_title else None
+    anikii_id_rom = slugify_anikii(romaji_title) if romaji_title else None
+    # A combined list useful for provider search
+    anikii_ids = [v for v in [anikii_id_eng, anikii_id_rom] if v]
     
     # Cover Image: Use color if available, or generate a random color
     cover_image_color = data['coverImage'].get('color', f"#{random.randint(0, 0xFFFFFF):06x}")
@@ -57,6 +66,9 @@ def structureAnilistDetails(dataObj: dict) -> dict:
         'id': data['id'],
         "anime_id_ext": anime_id_ext,
         'title': title,
+        "anikii_id_eng": anikii_id_eng,
+        "anikii_id_rom": anikii_id_rom,
+        "anikii_ids": anikii_ids,
         "synonyms":synonyms,
         'description': description,
         "genres": genres,

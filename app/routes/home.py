@@ -1,11 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from app.helpers.timeFunction import available_seasons,get_years
+from app.helpers.response_envelope import success_response
 
 
 router = APIRouter()
 
 @router.get("/")
-async def home():
+async def home(request: Request):
     # Message array split by periods
     message = [
         "Hello, there! Welcome to the Anikii API service.",
@@ -50,9 +51,10 @@ async def home():
     # Live URL
     live_url = "https://api-anikii.onrender.com/"
     
-    return {
+    data = {
         "message": message,
         "terms_of_use": terms_of_use,
         "endpoints": endpoints,
         "liveurl": live_url
     }
+    return success_response(request, data=data)

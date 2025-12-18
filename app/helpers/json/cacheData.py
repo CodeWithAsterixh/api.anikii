@@ -1,55 +1,70 @@
-from app.helpers.json.jsonParser import jsonLoad,jsonSave
+from typing import Any, Dict, List, Optional, Union
+from app.helpers.json.jsonParser import jsonLoad, jsonSave
 from app.helpers.json.pageLocator import ensure_page_exists
 from app.structure.listItem import structureAnilistArray
-from app.database.addFile import findFileByName, updateInDb
+# Database helpers are imported lazily inside functions to avoid side effects during import time
 
-def runCacheData(page: int|None, filePath: str):
+
+def runCacheData(page: Optional[int], filePath: str) -> Optional[Union[Dict[str, Any], List[Any]]]:
     """
-    Run the cache data
+    Return cached data if available.
+    - If page is None, returns the entire cached object (e.g., dict for paginated caches or list for collections) or None.
+    - If page is provided and exists, returns a dict with pageInfo and data for that page.
+    - Returns None when cache is not available for the requested page.
     """
-    
-    
     loadData = jsonLoad(filePath)
-    if not page:
-        return loadData
-    if loadData and ensure_page_exists(loadData, page) and page:
-            print("serving from cache")
-            lastPage = loadData["lastPage"]
-            pageInfo = {
-                "lastPage": lastPage,
-                "currentPage": page
-            }
-            data = loadData["pages"][str(page)]
-            return {
-                "pageInfo": pageInfo,
-                "data": data
-            }, 200
+
+    # If no specific page requested, return whatever is cached (may be dict or list)
+    if page is None:
+        return loadData if loadData else None
+
+    # When a page is requested, ensure it exists in cache
+    if isinstance(loadData, dict) and loadData and ensure_page_exists(loadData, page):
+        lastPage = loadData.get("lastPage", 1)
+        pageInfo = {
+            "lastPage": lastPage,
+            "currentPage": page,
+        }
+        data = loadData["pages"][str(page)]
+        return {
+            "pageInfo": pageInfo,
+            "data": data,
+        }
+
+    # No cache available, caller should fetch from API
+    return None
 
 
-    else:
-        print("serving from API")
-        
-def saveCacheData(pageInfo:dict, media:list, filePath: str, page:int):
+def saveCacheData(pageInfo: Dict[str, Any], media: List[Dict[str, Any]], filePath: str, page: int) -> Dict[str, Any]:
     """
-    Save the cache data
-    data should be an object that has the media and pageInfo keys
+    Save the cache data for a given file and page.
+    Returns the structured cached response dict with pageInfo and data.
     """
     structuredData = structureAnilistArray(media)
-    
-    lastPage = min(pageInfo["lastPage"], 50)
-    pageInfo = {
+
+    # Cap lastPage to a sane maximum (align with pagination constraints)
+    lastPage = min(pageInfo.get("lastPage", 1), 50)
+    pageInfo_out = {
         "lastPage": lastPage,
-        "currentPage": page
+        "currentPage": page,
     }
-    findDb = findFileByName(f"{filePath}.json")
-    if(findDb):
-        updateInDb(f"{filePath}.json", {"$set": { f"data.pages.{page}": structuredData }})
-        print("up-db")
-    
-    jsonSave(filePath,page,{"lastPage":lastPage,"data":structuredData})
-    return{
-        "pageInfo":pageInfo,
-        "data":structuredData
+
+    # Persist to DB if present (lazy import to avoid test-time DB dependency)
+    try:
+        from app.database.addFile import findFileByName, updateInDb  # type: ignore
+        findDb = findFileByName(f"{filePath}.json")
+        if findDb:
+            updateInDb(f"{filePath}.json", {"$set": {f"data.pages.{page}": structuredData}})
+            print("up-db")
+    except Exception as e:
+        # Skip DB persistence if unavailable
+        print(f"skip-db: {e}")
+
+    # Persist to JSON file
+    jsonSave(filePath, page, {"lastPage": lastPage, "data": structuredData})
+    return {
+        "pageInfo": pageInfo_out,
+        "data": structuredData,
     }
     
     

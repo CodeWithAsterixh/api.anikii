@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
 
 import requests
+from app.helpers.response_envelope import success_response, error_response
 
 router = APIRouter(prefix="/anime", tags=["id"])
 
 @router.get("/{id}/stream")
-async def animeInfoStream(id: int):
+async def animeInfoStream(request: Request, id: int):
     try:
         # Retrieve the query string using the query manager
         query = query_manager.get_query("stream", "get_stream_data")
@@ -24,21 +25,13 @@ async def animeInfoStream(id: int):
         # Make the API request
         response = make_api_request(body)
         if response.get("errors"):
-            raise HTTPException(status_code=500, detail=response["errors"])
+            return error_response(request, status_code=500, message="AniList error", error=response["errors"])
         data = response["data"]["Media"]
         
-
-        # Check for errors in the response
-        if response.get("errors"):
-            raise HTTPException(status_code=500, detail=response["errors"])
-
-        # Return the parsed result as JSON
-        return data, 200
+        return success_response(request, data=data)
 
     except requests.exceptions.RequestException as e:
-        # Handle any general request errors
-        raise HTTPException(status_code=500, detail=f"Request error: {str(e)}")
+        return error_response(request, status_code=500, message="Request error", error=str(e))
 
     except Exception as e:
-        # Handle any unforeseen errors
-        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+        return error_response(request, status_code=500, message="Unexpected error", error=str(e))

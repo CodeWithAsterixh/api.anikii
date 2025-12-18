@@ -1,14 +1,15 @@
-from fastapi import APIRouter, HTTPException,Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from app.helpers.fetchHelpers import make_api_request
 from app.helpers.streamInfoSc import parse_streaming_info
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
 from app.helpers.base import BASEURL
 import requests
+from app.helpers.response_envelope import success_response, error_response
 
 router = APIRouter(prefix="/anime", tags=["id"])
 
 @router.get("/{id}/stream/external")
-async def fetch_streaming_info(id: int, type: str = Query("sub", description="Type of episode: 'sub' or 'dub'")):
+async def fetch_streaming_info(request: Request, id: int, type: str = Query("sub", description="Type of episode: 'sub' or 'dub'")):
     try:
         # Fetch provider data (sub and dub IDs)
         idSub = await fetch_malsyn_data_and_get_provider(id)
@@ -16,9 +17,6 @@ async def fetch_streaming_info(id: int, type: str = Query("sub", description="Ty
 
         # Construct URLs for sub and dub episodes
         urlSub = f"{BASEURL}/{gogoSub}-episode-1"
-
-        # Initialize result containers
-        episode_dataSub = {}
 
         # Fetch and parse streaming info for Sub
         try:
@@ -29,12 +27,10 @@ async def fetch_streaming_info(id: int, type: str = Query("sub", description="Ty
             else:
                 raise
 
-        return episode_dataSub, 200
+        return success_response(request, data=episode_dataSub)
 
     except requests.exceptions.RequestException as e:
-        # Handle general request errors
-        raise HTTPException(status_code=500, detail=f"Request error: {str(e)}")
+        return error_response(request, status_code=500, message="Request error", error=str(e))
 
     except Exception as e:
-        # Handle any unforeseen errors
-        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+        return error_response(request, status_code=500, message="Unexpected error", error=str(e))

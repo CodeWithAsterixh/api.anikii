@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from app.helpers.fetchHelpers import make_api_request
 from app.queries.query_manager import query_manager
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
 from app.helpers.getEpM3u8BasedGogo import get_episode
+from app.helpers.response_envelope import success_response, error_response
 
 router = APIRouter(prefix="/anime", tags=["id", "ep"])
 
 @router.get("/{id}/stream/ep/{ep}/extra")
-async def fetch_streaming_info(id: int, ep: int):
+async def fetch_streaming_info(request: Request, id: int, ep: int):
     try:
         # Retrieve the GraphQL query
         query = query_manager.get_query("stream", "get_stream_data")
@@ -23,16 +24,13 @@ async def fetch_streaming_info(id: int, ep: int):
         
         
         # Make the API request to retrieve anime data
-        response = make_api_request(body)  # Ensure `make_api_request` is async
+        response = make_api_request(body)
         if response.get("errors"):
-            raise HTTPException(status_code=500, detail=response["errors"])
+            return error_response(request, status_code=500, message="AniList error", error=response["errors"])
 
         data = response["data"]["Media"]
         
-        
-        
         # extra info
-        print("still working", data)
         title = ''
         thumbnail = ''
         if len(data["streamingEpisodes"]) > 0:
@@ -59,12 +57,12 @@ async def fetch_streaming_info(id: int, ep: int):
             try:
                 episode_sub = await get_episode(gogoId, ep)
             except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Error fetching episodes: {str(e)}")
+                return error_response(request, status_code=500, message="Error fetching sub episode", error=str(e))
         if gogoIdDub:
             try:
                 episode_dub = await get_episode(gogoIdDub, ep)
             except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Error fetching episodes: {str(e)}")
+                return error_response(request, status_code=500, message="Error fetching dub episode", error=str(e))
 
         # Combine results into response object
         result = {
@@ -79,13 +77,13 @@ async def fetch_streaming_info(id: int, ep: int):
                 }                 
             },
         }
+        meta = {
+            "episode": ep,
+            "hasSub": bool(episode_sub),
+            "hasDub": bool(episode_dub),
+        }
 
-        return {"result": result}
-
-    except HTTPException as http_ex:
-        # Re-raise HTTP exceptions with proper status codes
-        raise http_ex
+        return success_response(request, data=result, meta=meta)
 
     except Exception as e:
-        # Handle unforeseen errors
-        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+        return error_response(request, status_code=500, message="Unexpected error", error=str(e))

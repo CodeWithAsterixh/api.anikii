@@ -29,6 +29,7 @@ from app.routes import (
     save_data,
     savedDatas
 )
+from app.core.config import get_settings
 
 
 
@@ -38,13 +39,14 @@ load_dotenv()
 # Initialize the FastAPI application
 app = FastAPI()
 
+settings = get_settings()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000","http://localhost:5173","https://anikii.vercel.app","https://archive-anikii.vercel.app"],  # Allow only frontend origin
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Route configurations
@@ -81,7 +83,32 @@ routes = [
 for route in routes:
     app.include_router(route)
 
+# Global exception handlers using standardized envelope
+from fastapi import Request, HTTPException
+from fastapi.responses import JSONResponse
+from app.helpers.response_envelope import error_response, success_response
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    body = error_response(
+        request,
+        status_code=exc.status_code,
+        message=str(exc.detail) if exc.detail is not None else "HTTP error",
+        error={"type": "HTTPException"}
+    )
+    return JSONResponse(status_code=exc.status_code, content=body)
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    body = error_response(
+        request,
+        status_code=500,
+        message="Server error",
+        error={"type": exc.__class__.__name__, "detail": str(exc)}
+    )
+    return JSONResponse(status_code=500, content=body)
+
 # Health check endpoint
 @app.get("/health")
-def health_check():
-    return {"status": "API is up and running! go to /popular"}
+def health_check(request: Request):
+    return success_response(request, data={"status": "API is up and running! go to /popular"})

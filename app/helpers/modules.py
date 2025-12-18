@@ -1,8 +1,8 @@
 import requests
 from urllib.parse import urlparse
 
-
 # Synchronous function to fetch mapping data
+# (Deprecated: no longer used for provider IDs)
 def fetch_mapping_data(anime_id: int):
     try:
         # Define the URL
@@ -71,25 +71,38 @@ async def get_id_each_provider(json_data: dict, anime_id: int) -> dict:
             "idPahe": id_pahe,
         }
 
+from app.services.anilist_service import fetch_anime_details
+from app.helpers.base import slugify_anikii
+
 # Main function to fetch data and get provider IDs
 async def fetch_malsyn_data_and_get_provider(anime_id: int):
-    # Fetch the mapping data (remove await since this is synchronous)
-    malsyn_data = fetch_mapping_data(anime_id)
-    id_provider = None
-    is_dub = False
+    """Build provider IDs using AniList details (romaji title) instead of MAL backup.
+    - idGogo: romaji title slug (lowercase, spaces -> hyphens)
+    - idGogoDub: romaji title slug with '-dub' suffix
+    - idZoro/idPahe: left empty
+    """
+    try:
+        media = fetch_anime_details(anime_id)
+        title = media.get("title", {})
+        romaji = title.get("romaji") or ""
+        slug = slugify_anikii(romaji) if romaji else ""
 
-    if not malsyn_data:
-        id_provider = None
-    else:
-        # Get the provider IDs (await since this is async)
-        id_provider = await get_id_each_provider(malsyn_data, anime_id)
+        id_provider = {
+            "idGogo": slug,
+            "idGogoDub": f"{slug}-dub" if slug else "",
+            "idZoro": "",
+            "idPahe": "",
+        }
 
-        # Check if Gogoanime exists and contains "dub"
-        if malsyn_data.get("Sites", {}).get("Gogoanime"):
-            if "dub" in str(malsyn_data["Sites"]["Gogoanime"]):
-                is_dub = True
+        # is_dub is no longer inferred from MAL backup; default False
+        is_dub = False
 
-    return {
-        "id_provider": id_provider,
-        "is_dub": is_dub,
-    }
+        return {
+            "id_provider": id_provider,
+            "is_dub": is_dub,
+        }
+    except Exception:
+        return {
+            "id_provider": None,
+            "is_dub": False,
+        }

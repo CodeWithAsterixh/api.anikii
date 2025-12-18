@@ -1,3 +1,30 @@
+.env
+# Python caches and bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Test and tooling caches
+.pytest_cache/
+.coverage
+.mypy_cache/
+.ruff_cache/
+
+# OS/editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Virtual environments
+venv/
+.env*/
+.venv/
+
+# Project specific
 /demo.json
 /venv
 /__pycache__

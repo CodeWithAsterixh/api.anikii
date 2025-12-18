@@ -7,9 +7,10 @@ from app.helpers.scrapers.m3u8Fetch import get_m3u8  # Ensure this is async
 # Constants
 BASE_URLS = [
     "https://gogoanime.co.at/",
-    "https://anitaku.bz",
+    "https://anitaku.bz/",
     "https://gogoanime3.cc/",
-    "https://www1.gogoanime.co.ba/",
+    "https://www14.gogoanimes.fi/",
+    "https://9anime.org.lv/",
 ]
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "

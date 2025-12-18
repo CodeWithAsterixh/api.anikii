@@ -1,6 +1,11 @@
 import os
 import json
 import time
+import tempfile
+
+# Use a cross-platform temp directory (e.g., C:\Users\\<User>\\AppData\\Local\\Temp on Windows, /tmp on Linux)
+BASE_TMP_DIR = os.path.join(tempfile.gettempdir(), "anikii")
+
 
 def jsonLoad(fileName: str) -> dict:
     """
@@ -12,7 +17,7 @@ def jsonLoad(fileName: str) -> dict:
     Returns:
         dict: The data from the JSON file or an empty dictionary if the file doesn't exist.
     """
-    json_path = f"/tmp/anikii/{fileName}.json"
+    json_path = os.path.join(BASE_TMP_DIR, f"{fileName}.json")
     print(f"Loading data from {json_path}")
 
     if os.path.exists(json_path):
@@ -35,7 +40,7 @@ def jsonLoadMeta(fileName: str) -> dict:
     Returns:
         dict: The data from the JSON file or an empty dictionary if the file doesn't exist.
     """
-    json_path = f"/tmp/anikii/{fileName}.json"
+    json_path = os.path.join(BASE_TMP_DIR, f"{fileName}.json")
     print(f"Loading data from {json_path}")
 
     if os.path.exists(json_path):
@@ -82,10 +87,9 @@ def jsonSave(fileName: str, page: int, new_items: dict) -> dict:
     """
 
     # Ensure the directory exists
-    directory = "/tmp/anikii"
-    os.makedirs(directory, exist_ok=True)
+    os.makedirs(BASE_TMP_DIR, exist_ok=True)
 
-    json_path = os.path.join(directory, f"{fileName}.json")
+    json_path = os.path.join(BASE_TMP_DIR, f"{fileName}.json")
     print(f"Saving data to {json_path}")
 
     # Load existing data if available
@@ -134,10 +138,9 @@ def jsonWrite(fileName: str, content):
     """
 
     # Ensure the directory exists
-    directory = "/tmp/anikii"
-    os.makedirs(directory, exist_ok=True)
+    os.makedirs(BASE_TMP_DIR, exist_ok=True)
 
-    json_path = os.path.join(directory, f"{fileName}.json")
+    json_path = os.path.join(BASE_TMP_DIR, f"{fileName}.json")
     print("sv-tmp")
 
 

@@ -1,11 +1,18 @@
 import os
 import shutil
+import tempfile
 
-def clear_anikii_route(directory="/tmp/anikii", prefix="", filename_td=""):
+BASE_TMP_DIR = os.path.join(tempfile.gettempdir(), "anikii")
+
+
+def clear_anikii_route(directory: str | None = None, prefix: str = "", filename_td: str = ""):
     """
     Deletes all files and folders in the given directory that start with the given prefix.
     Returns a list of deleted items.
+    Defaults to the cross-platform temp directory.
     """
+    directory = directory or BASE_TMP_DIR
+
     if not os.path.exists(directory):
         print(f"Directory {directory} does not exist.")
         return []
@@ -13,7 +20,7 @@ def clear_anikii_route(directory="/tmp/anikii", prefix="", filename_td=""):
     deleted_files = []  # Store deleted filenames
 
     for filename in os.listdir(directory):
-        if filename.startswith(prefix):  # Check if filename starts with "anikiiRoute"
+        if filename.startswith(prefix):  # Check if filename starts with prefix
             file_path = os.path.join(directory, filename)
             try:
                 # Remove files and symbolic links
@@ -32,11 +39,13 @@ def clear_anikii_route(directory="/tmp/anikii", prefix="", filename_td=""):
     return deleted_files  # Return list of deleted files
 
 
-def delete_specific_file( filename="",directory="/tmp/anikii"):
+def delete_specific_file(filename: str = "", directory: str | None = None):
     """
     Deletes a specific file in the given directory.
     Returns True if the file was deleted, False otherwise.
+    Defaults to the cross-platform temp directory.
     """
+    directory = directory or BASE_TMP_DIR
     file_path = os.path.join(directory, filename)
 
     if not os.path.exists(file_path):
@@ -45,5 +54,5 @@ def delete_specific_file( filename="",directory="/tmp/anikii"):
     try:
         os.unlink(file_path)  # Remove the file
         return True
-    except Exception as e:
+    except Exception:
         return False

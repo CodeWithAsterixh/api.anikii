@@ -38,9 +38,13 @@ def decrypt_aes(data: str, key: bytes, iv: bytes) -> str:
     Returns:
         str: The decrypted plaintext data.
     """
-    cipher = AES.new(key, AES.MODE_CBC, iv)
-    decrypted_bytes = unpad(cipher.decrypt(base64.b64decode(data)), AES.block_size)
-    return decrypted_bytes.decode('utf-8')
+    try:
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        decrypted_bytes = unpad(cipher.decrypt(base64.b64decode(data)), AES.block_size)
+        return decrypted_bytes.decode('utf-8', errors='ignore')
+    except Exception as e:
+        print(f"AES Decryption error: {e}")
+        return ""
 
 def generate_encrypt_ajax_parameters(script_data: str, video_id: str) -> str:
     """

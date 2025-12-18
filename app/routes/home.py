@@ -64,7 +64,7 @@ async def home(request: Request):
     # Resolve path to api_documentation.json relative to project root
     try:
         doc_path = Path(__file__).resolve().parents[2] / "api_documentation.json"
-        with open(doc_path, "r", encoding="utf-8") as f:
+        with open(doc_path, "r", encoding="utf-8-sig") as f:
             documentation = json.load(f)
         return success_response(request, data=documentation)
     except Exception:

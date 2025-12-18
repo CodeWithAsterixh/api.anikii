@@ -22,10 +22,10 @@ def jsonLoad(fileName: str) -> dict:
 
     if os.path.exists(json_path):
         try:
-            with open(json_path, "r") as file:
+            with open(json_path, "r", encoding="utf-8-sig") as file:
                 return json.load(file)
-        except json.JSONDecodeError:
-            print("Error: JSON file is corrupted. Returning empty data.")
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            print("Error: JSON file is corrupted or has invalid encoding. Returning empty data.")
             return {}
     return {}
 
@@ -116,7 +116,7 @@ def jsonSave(fileName: str, page: int, new_items: dict) -> dict:
 
     # Save the updated data
     try:
-        with open(json_path, "w") as file:
+        with open(json_path, "w", encoding="utf-8") as file:
             json.dump(data, file, indent=4)
         print("up-tmp")
         return data
@@ -149,7 +149,7 @@ def jsonWrite(fileName: str, content):
 
     # Save the updated data
     try:
-        with open(json_path, "w") as file:
+        with open(json_path, "w", encoding="utf-8") as file:
             json.dump(content, file, indent=4)
         print("up-tmp")
 

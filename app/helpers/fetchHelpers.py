@@ -16,8 +16,7 @@ def get_options(body_obj: dict) -> dict:
         "headers": {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "anikii-api/1.0 (+https://github.com/asterixh/anikii)",
-            "Accept-Encoding": "gzip, deflate, br",
+            "User-Agent": "anikii-api/1.0 (+https://github.com/CodeWithAsterixh/api.anikii)",
         },
         # Keep Python dict for json parameter; requests will serialize efficiently
         "body": body_obj,
@@ -35,7 +34,6 @@ async def _get_async_client() -> httpx.AsyncClient:
         _async_client = httpx.AsyncClient(timeout=timeout, limits=limits, follow_redirects=True, headers={
             "User-Agent": "anikii-api/1.0 (+https://github.com/asterixh/anikii)",
             "Accept": "application/json",
-            "Accept-Encoding": "gzip, deflate, br",
             "Content-Type": "application/json",
         })
     return _async_client
@@ -59,7 +57,14 @@ async def make_api_request_async(body_obj: dict, timeout: float = 10.0, max_retr
                 attempt += 1
                 continue
             resp.raise_for_status()
-            return resp.json()
+            try:
+                return resp.json()
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                # Handle cases where response might have a BOM or other issues
+                content = resp.content
+                # Try to decode with utf-8-sig to handle BOM, and ignore errors as fallback
+                text = content.decode('utf-8-sig', errors='ignore')
+                return json.loads(text)
         except (httpx.RequestError, httpx.HTTPStatusError) as e:
             last_exc = e
             if attempt < max_retries:

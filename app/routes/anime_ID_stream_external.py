@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Query, Request
-from app.helpers.fetchHelpers import make_api_request
 from app.helpers.streamInfoSc import parse_streaming_info
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
 from app.helpers.base import BASEURL

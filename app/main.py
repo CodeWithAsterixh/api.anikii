@@ -2,6 +2,7 @@ from fastapi import FastAPI # type: ignore
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from starlette.middleware.gzip import GZipMiddleware
+from fastapi.responses import ORJSONResponse, JSONResponse
 
 from app.routes import (
     anime_ID_stream_EP_extra,
@@ -88,7 +89,6 @@ for route in routes:
 
 # Global exception handlers using standardized envelope
 from fastapi import Request, HTTPException
-from fastapi.responses import ORJSONResponse, JSONResponse
 from app.helpers.response_envelope import error_response, success_response
 from app.helpers.fetchHelpers import close_async_client
 

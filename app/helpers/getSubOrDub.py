@@ -1,8 +1,6 @@
-import requests
 from fastapi import HTTPException
 import urllib3
 from app.helpers.getEpM3u8BasedGogo import get_episode
-
 
 # Disable SSL warnings (for testing; in production configure certificates properly)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -36,7 +34,7 @@ async def get_episode_data(id: int, ep: int, type: str = "sub"):
         
         # Parse the streaming info from the URL.
         if gogoId:
-            data = parse_streaming_info(url)
+            data = await parse_streaming_info(url)
             # Build a 9anime.org.lv episode URL using the anime title slug
             anime_title = data.anime_info.get("title") if isinstance(data.anime_info, dict) else None
             slug = slugify_anikii(anime_title) if anime_title else None
@@ -99,12 +97,7 @@ async def get_episode_data(id: int, ep: int, type: str = "sub"):
                 "stream_links":stream_links,
             }
         return None
-    except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
-            raise HTTPException(status_code=404, detail=f"{type.capitalize()} episode not found: {ep}")
-        else:
-            raise
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Request error: {str(e)}")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
-import requests
-from app.helpers.fetchHelpers import make_api_request
+import httpx
+from app.helpers.fetchHelpers import make_api_request_async
 from app.queries.query_manager import query_manager
 from app.helpers.json.cacheData import runCacheData,saveCacheData
 from app.helpers.response_envelope import success_response, error_response
@@ -8,7 +8,7 @@ from app.helpers.response_envelope import success_response, error_response
 router = APIRouter()
 
 @router.get("/popular/upcoming")
-def popular_upcoming(request: Request, page: int=1):
+async def popular_upcoming(request: Request, page: int=1):
     try:
         cacheDataAvailable = runCacheData(page,"popular_upcoming")
         if cacheDataAvailable:
@@ -26,7 +26,7 @@ def popular_upcoming(request: Request, page: int=1):
         }
 
         # Make the API request
-        response = make_api_request(body)
+        response = await make_api_request_async(body)
         # Check for errors in the response
         if response.get("errors"):
             return error_response(request, status_code=500, message="AniList error", error=response["errors"])
@@ -39,7 +39,7 @@ def popular_upcoming(request: Request, page: int=1):
         return success_response(request, data=media, meta=meta)
 
 
-    except requests.exceptions.RequestException as e:
+    except (httpx.RequestError, httpx.HTTPStatusError) as e:
         return error_response(request, status_code=500, message="Request error", error=str(e))
 
     except Exception as e:

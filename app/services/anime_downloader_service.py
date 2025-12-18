@@ -18,7 +18,7 @@ async def resolve_stream_with_anime_downloader(anilist_id: int, ep: int, type_: 
     Returns a dict with episode_info, provider, and stream_links (direct) or None.
     """
     try:
-        data = fetch_anime_details(anilist_id)
+        data = await fetch_anime_details(anilist_id)
         title_obj = data.get('title', {})
         title = title_obj.get('english') or title_obj.get('romaji') or title_obj.get('native')
         if not title:

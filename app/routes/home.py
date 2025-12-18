@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Request
 from app.helpers.timeFunction import available_seasons,get_years
 from app.helpers.response_envelope import success_response
+import json
+from pathlib import Path
 
 
 router = APIRouter()
@@ -51,10 +53,20 @@ async def home(request: Request):
     # Live URL
     live_url = "https://api-anikii.onrender.com/"
     
+    # Keep current home data defined but unused per request; return documentation JSON instead
     data = {
         "message": message,
         "terms_of_use": terms_of_use,
         "endpoints": endpoints,
         "liveurl": live_url
     }
-    return success_response(request, data=data)
+
+    # Resolve path to api_documentation.json relative to project root
+    try:
+        doc_path = Path(__file__).resolve().parents[2] / "api_documentation.json"
+        with open(doc_path, "r", encoding="utf-8") as f:
+            documentation = json.load(f)
+        return success_response(request, data=documentation)
+    except Exception:
+        # Safe fallback to previous home data if documentation cannot be loaded
+        return success_response(request, data=data)

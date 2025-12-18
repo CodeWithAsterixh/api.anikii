@@ -50,6 +50,7 @@ typing_extensions==4.12.2
 url-normalize==1.4.3
 urllib3==1.26.6
 uvicorn==0.32.1
+orjson==3.10.12
 websocket-client==1.8.0
 wsproto==1.2.0
 pytest==8.3.3

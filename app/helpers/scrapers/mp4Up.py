@@ -1,5 +1,5 @@
 import re
-import requests
+import httpx
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
@@ -13,11 +13,11 @@ async def getVid(url: str) -> str:
     referer_url = parsed_url.geturl()
     print(f"Fetching URL: {referer_url}")
 
-    response = requests.get(referer_url, headers={"User-Agent": USER_AGENT})
-    print("Response status:", response.status_code)
-    response.raise_for_status()
-
-    soup = BeautifulSoup(response.text, "html.parser")
+    async with httpx.AsyncClient(follow_redirects=True) as client:
+        r = await client.get(referer_url, headers={"User-Agent": USER_AGENT})
+        print("Response status:", r.status_code)
+        r.raise_for_status()
+        soup = BeautifulSoup(r.text, "html.parser")
     scripts = soup.find_all("script")
     video_url = None
     # Regex to capture the video URL from the player.src call

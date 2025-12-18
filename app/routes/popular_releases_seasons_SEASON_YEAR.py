@@ -1,45 +1,24 @@
 
 from fastapi import APIRouter, Request
-from app.helpers.fetchHelpers import make_api_request
-from app.helpers.timeFunction import this_when, get_current_season, available_seasons
+from app.helpers.fetchHelpers import make_api_request_async
 from app.queries.query_manager import query_manager
 from app.helpers.json.cacheData import runCacheData,saveCacheData
+import httpx
 from app.helpers.response_envelope import success_response, error_response
 
-import requests
+router = APIRouter()
 
-router = APIRouter(prefix="/popular/releases/seasons", tags=["season", "year"])
-
-@router.get("/{season}/{year}")
-def popular_releases_seasons_SEASON(request: Request, season: str,year: int, page: int=1):
+@router.get("/popular/releases/seasons/{season}/{year}")
+async def popular_releases_seasons_SEASON_YEAR(request: Request, season:str, year:int, page: int=1):
     try:
         cacheDataAvailable = runCacheData(page,f"popular_releases_seasons_{season}_{year}")
         if cacheDataAvailable:
             meta = {"pagination": cacheDataAvailable.get("pageInfo")}
             return success_response(request, data=cacheDataAvailable.get("data"), meta=meta)
-    
-        
         # Retrieve the query string using the query manager
-        query = query_manager.get_query("releases", "get_releases")
-
-        # If the provided season is invalid, use the current season
-        if not any(s.lower() == season.lower() for s in available_seasons):
-            season = get_current_season()
-            
-        # Ensure the season is in uppercase format
-        season = season.upper()
-        
-        # Ensure the year is available
-        if not year:
-            year = this_when.year
-        
-
-        # Define the variables for the API request
-        variables = {
-            "page": page,
-            "season": season,
-            "year": year
-        }
+        query = query_manager.get_query("releases", "get_releases")        
+        # Define the variables
+        variables = {"page": page, "season":season, "year":year}
 
         # Prepare the body for the API request
         body = {
@@ -48,20 +27,20 @@ def popular_releases_seasons_SEASON(request: Request, season: str,year: int, pag
         }
 
         # Make the API request
-        response = make_api_request(body)
+        response = await make_api_request_async(body)
 
         # Check for errors in the response
-        if "errors" in response:
+        if response.get("errors"):
             return error_response(request, status_code=500, message="AniList error", error=response["errors"])
 
-        media = response["data"]["Page"]["media"]
         pageInfo = response["data"]["Page"]["pageInfo"]
+        media = response["data"]["Page"]["media"]
         
         data = saveCacheData(pageInfo, media, f"popular_releases_seasons_{season}_{year}", page)
         meta = {"pagination": pageInfo}
         return success_response(request, data=media, meta=meta)
 
-    except requests.exceptions.RequestException as e:
+    except (httpx.RequestError, httpx.HTTPStatusError) as e:
         return error_response(request, status_code=500, message="Request error", error=str(e))
 
     except Exception as e:

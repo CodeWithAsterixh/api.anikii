@@ -1,26 +1,8 @@
-import requests
 from urllib.parse import urlparse
 
 # Synchronous function to fetch mapping data
 # (Deprecated: no longer used for provider IDs)
-def fetch_mapping_data(anime_id: int):
-    try:
-        # Define the URL
-        url = f"https://raw.githubusercontent.com/bal-mackup/mal-backup/master/anilist/anime/{anime_id}.json"
-        
-        # Make the GET request
-        response = requests.get(url)
-        # Raise an exception for HTTP errors
-        response.raise_for_status()
-        
-        # Parse and return the JSON response
-        return response.json()
-    except requests.HTTPError as http_err:
-        return {"error": f"HTTP error occurred: {http_err}"}
-    except Exception as err:
-        return {"error": f"An error occurred: {err}"}
-
-
+# NOTE: Removed requests dependency to avoid blocking calls; function retained for reference.
 
 # Define custom_provider_data here (as an example)
 custom_provider_data = [
@@ -82,7 +64,7 @@ async def fetch_malsyn_data_and_get_provider(anime_id: int):
     - idZoro/idPahe: left empty
     """
     try:
-        media = fetch_anime_details(anime_id)
+        media = await fetch_anime_details(anime_id)
         title = media.get("title", {})
         romaji = title.get("romaji") or ""
         slug = slugify_anikii(romaji) if romaji else ""

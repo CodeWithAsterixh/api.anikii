@@ -1,4 +1,4 @@
-import requests
+import httpx
 from bs4 import BeautifulSoup
 from typing import List, Dict
 
@@ -14,26 +14,25 @@ class StreamInfo:
         self.episode_info = episode_info
         self.stream_links = stream_links
 
-def parse_streaming_info(url: str) -> StreamInfo:
+async def parse_streaming_info(url: str) -> StreamInfo:
     # Make a GET request to fetch the HTML content of the URL
-    response = requests.get(url)
-    response.raise_for_status()  # Ensure the request was successful
+    async with httpx.AsyncClient(follow_redirects=True) as client:
+        r = await client.get(url)
+        r.raise_for_status()  # Ensure the request was successful
+        html = r.text
     
     # Parse the HTML content with BeautifulSoup
-    soup = BeautifulSoup(response.text, 'html.parser')
+    soup = BeautifulSoup(html, 'html.parser')
 
     # Extract stream links (class and URL)
     stream_links = []
     for li in soup.select('div.anime_muti_link ul li'):
         name = li.get('class', [None])[0]  # Get the first class name (if exists)
-        url = li.find('a', {'data-video': True})  # Find the link with the 'data-video' attribute
-        if name and url:
-            stream_links.append(StreamLink(name, url.get('data-video')))
+        url_el = li.find('a', {'data-video': True})  # Find the link with the 'data-video' attribute
+        if name and url_el:
+            stream_links.append(StreamLink(name, url_el.get('data-video')))
     
-    
-
     # Extract the maximum episode number
-    print(soup.select_one('ul#episode_page'))
     max_ep_available = soup.select_one('ul#episode_page')
     
     max_episode = 0
@@ -55,6 +54,6 @@ def parse_streaming_info(url: str) -> StreamInfo:
     return StreamInfo(anime_info, episode_info, stream_links)
 
 # Example usage:
-# streaming_info = parse_streaming_info(url)
+# streaming_info = await parse_streaming_info(url)
 
 

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request, Query
 from pydantic import BaseModel
-from app.helpers.fetchHelpers import make_api_request
+from app.helpers.fetchHelpers import make_api_request_async
+import httpx
 from app.queries.query_manager import query_manager
 from app.helpers.response_envelope import success_response, error_response
 
@@ -11,7 +12,7 @@ class FYPRequest(BaseModel):
     collection: list[str]
 
 @router.post("/fyp")
-def genres_GENRE(request: Request, fyp_request: FYPRequest, page: int = Query(1, ge=1, le=50)):
+async def genres_GENRE(request: Request, fyp_request: FYPRequest, page: int = Query(1, ge=1, le=50)):
     try:
         # Extract the FYP collection from the request body
         collection = fyp_request.collection
@@ -22,7 +23,7 @@ def genres_GENRE(request: Request, fyp_request: FYPRequest, page: int = Query(1,
 
         # Iterate over FYP IDs and fetch associated data
         for fyid in collection:
-            main_res = make_api_request({
+            main_res = await make_api_request_async({
                 "query": query_fyp,
                 "variables": {"id": fyid, "page": page}
             })
@@ -66,9 +67,8 @@ def genres_GENRE(request: Request, fyp_request: FYPRequest, page: int = Query(1,
         meta = {"fyp": {"count": len(flattened_list), "ids": collection, "page": page}}
         return success_response(request, data=flattened_list, meta=meta)
 
-    except HTTPException as http_ex:
-        # Handle HTTP-related errors
-        return error_response(request, status_code=http_ex.status_code, message=str(http_ex.detail), error={"type": "HTTPException"})
+    except (httpx.RequestError, httpx.HTTPStatusError) as e:
+        return error_response(request, status_code=500, message="Request error", error=str(e))
 
     except Exception as e:
         # Handle any unforeseen errors

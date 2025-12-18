@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request
-from app.helpers.fetchHelpers import make_api_request
+from app.helpers.fetchHelpers import make_api_request_async
 from app.queries.query_manager import query_manager
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
 from app.helpers.getEpM3u8BasedGogo import get_episode
@@ -24,7 +24,7 @@ async def fetch_streaming_info(request: Request, id: int, ep: int):
         
         
         # Make the API request to retrieve anime data
-        response = make_api_request(body)
+        response = await make_api_request_async(body)
         if response.get("errors"):
             return error_response(request, status_code=500, message="AniList error", error=response["errors"])
 

@@ -1,6 +1,7 @@
 from fastapi import FastAPI # type: ignore
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from starlette.middleware.gzip import GZipMiddleware
 
 from app.routes import (
     anime_ID_stream_EP_extra,
@@ -30,6 +31,7 @@ from app.routes import (
     savedDatas
 )
 from app.core.config import get_settings
+from app.helpers.fetchHelpers import close_async_client, _get_async_client
 
 
 
@@ -37,7 +39,7 @@ from app.core.config import get_settings
 load_dotenv()
 
 # Initialize the FastAPI application
-app = FastAPI()
+app = FastAPI(default_response_class=ORJSONResponse)
 
 settings = get_settings()
 
@@ -48,6 +50,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=512)
 
 # Route configurations
 routes = [
@@ -85,8 +88,9 @@ for route in routes:
 
 # Global exception handlers using standardized envelope
 from fastapi import Request, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import ORJSONResponse, JSONResponse
 from app.helpers.response_envelope import error_response, success_response
+from app.helpers.fetchHelpers import close_async_client
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
@@ -96,7 +100,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         message=str(exc.detail) if exc.detail is not None else "HTTP error",
         error={"type": "HTTPException"}
     )
-    return JSONResponse(status_code=exc.status_code, content=body)
+    return ORJSONResponse(status_code=exc.status_code, content=body)
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
@@ -106,9 +110,19 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
         message="Server error",
         error={"type": exc.__class__.__name__, "detail": str(exc)}
     )
-    return JSONResponse(status_code=500, content=body)
+    return ORJSONResponse(status_code=500, content=body)
 
 # Health check endpoint
 @app.get("/health")
 def health_check(request: Request):
     return success_response(request, data={"status": "API is up and running! go to /popular"})
+
+@app.on_event("startup")
+async def startup_event():
+    # Initialize shared AsyncClient(s) for outbound HTTP
+    await _get_async_client()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    # Gracefully close shared AsyncClient(s)
+    await close_async_client()

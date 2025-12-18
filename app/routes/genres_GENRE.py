@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
-from app.helpers.fetchHelpers import make_api_request
+from app.helpers.fetchHelpers import make_api_request_async
 from app.queries.query_manager import query_manager
-import requests
+import httpx
 from app.helpers.json.cacheData import runCacheData,saveCacheData
 from app.helpers.response_envelope import success_response, error_response
 
@@ -10,7 +10,7 @@ router = APIRouter(prefix="/genres", tags=["genre"])
 
 
 @router.get("/{genre}")
-def genres_GENRE(request: Request, genre:str, page: int=1):
+async def genres_GENRE(request: Request, genre:str, page: int=1):
     try:
         cacheDataAvailable = runCacheData(page,f"genres_{genre}")
         if cacheDataAvailable:
@@ -28,7 +28,7 @@ def genres_GENRE(request: Request, genre:str, page: int=1):
         }
 
         # Make the API request
-        response = make_api_request(body)
+        response = await make_api_request_async(body)
 
         # Check for errors in the response
         if response.get("errors"):
@@ -40,7 +40,7 @@ def genres_GENRE(request: Request, genre:str, page: int=1):
         meta = {"pagination": pageInfo}
         return success_response(request, data=media, meta=meta)
 
-    except requests.exceptions.RequestException as e:
+    except (httpx.RequestError, httpx.HTTPStatusError) as e:
         return error_response(request, status_code=500, message="Request error", error=str(e))
 
     except Exception as e:

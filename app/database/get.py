@@ -1,6 +1,8 @@
 from pymongo import MongoClient
 from app.core.config import get_settings
 
+# Module-level singleton client for connection reuse and pooling
+_client: MongoClient | None = None
 
 def get_database():
     """
@@ -9,6 +11,7 @@ def get_database():
     Reads the MongoDB URI and database name from environment variables via app.core.config.
     Raises a RuntimeError if the MongoDB URI is not provided.
     """
+    global _client
     settings = get_settings()
     uri = settings.MONGO_URI
     if not uri:
@@ -16,8 +19,9 @@ def get_database():
             "MongoUri environment variable is missing. Set it in your .env file and avoid committing secrets to source control."
         )
 
-    client = MongoClient(uri)
-    return client.get_database(settings.DB_NAME)
+    if _client is None:
+        _client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+    return _client.get_database(settings.DB_NAME)
     
     
 

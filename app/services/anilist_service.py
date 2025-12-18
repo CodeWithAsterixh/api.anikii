@@ -1,18 +1,17 @@
 from typing import Any, Dict, List, Tuple
-from app.helpers.fetchHelpers import make_api_request
+from app.helpers.fetchHelpers import make_api_request_async
 from app.structure.listItem import structureAnilistArray, structureAnilistItem
 from app.structure.details import structureAnilistRelations, structureAnilistTrailer
 from app.queries.query_manager import query_manager
 
-
-def fetch_search(keyword: str) -> List[Dict[str, Any]]:
+async def fetch_search(keyword: str) -> List[Dict[str, Any]]:
     """
     Fetch search results from AniList and return structured list items.
     """
     query = query_manager.get_query("search", "search_media")
     variables = {"search": keyword}
     body = {"query": query, "variables": variables}
-    response = make_api_request(body)
+    response = await make_api_request_async(body)
 
     if response.get("errors"):
         # Let the caller decide how to handle errors
@@ -21,8 +20,7 @@ def fetch_search(keyword: str) -> List[Dict[str, Any]]:
     data = response["data"]["Page"]["media"]
     return structureAnilistArray(data)
 
-
-def fetch_popular(page: int) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+async def fetch_popular(page: int) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     """
     Fetch popular media pageInfo and media list from AniList.
     Returns (pageInfo, media).
@@ -30,7 +28,7 @@ def fetch_popular(page: int) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     query = query_manager.get_query("popular", "get_popular_media")
     variables = {"page": page}
     body = {"query": query, "variables": variables}
-    response = make_api_request(body)
+    response = await make_api_request_async(body)
 
     if response.get("errors"):
         raise RuntimeError(response["errors"])  # includes AniList GraphQL errors
@@ -39,61 +37,56 @@ def fetch_popular(page: int) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     media = response["data"]["Page"]["media"]
     return pageInfo, media
 
-
-def fetch_genres() -> List[str]:
+async def fetch_genres() -> List[str]:
     """
     Fetch the genre collection from AniList.
     """
     query_genres = query_manager.get_query("genres", "get_genres")
-    genre_res = make_api_request({"query": query_genres, "variables": {}})
+    genre_res = await make_api_request_async({"query": query_genres, "variables": {}})
 
     if genre_res.get("errors"):
         raise RuntimeError(genre_res["errors"])  # includes AniList GraphQL errors
 
     return genre_res["data"]["GenreCollection"]
 
-
-def fetch_anime_details(id: int) -> Dict[str, Any]:
+async def fetch_anime_details(id: int) -> Dict[str, Any]:
     """Fetch raw anime details Media object from AniList."""
     query = query_manager.get_query("description", "get_descriptions")
     variables = {"id": id}
     body = {"query": query, "variables": variables}
-    response = make_api_request(body)
+    response = await make_api_request_async(body)
     if response.get("errors"):
         raise RuntimeError(response["errors"])  # includes AniList GraphQL errors
     return response["data"]["Media"]
 
-
-def fetch_anime_relations(id: int) -> Dict[str, Any]:
+async def fetch_anime_relations(id: int) -> Dict[str, Any]:
     """Fetch and structure anime relations for a given id."""
     query = query_manager.get_query("relations", "get_relations")
     variables = {"id": id}
     body = {"query": query, "variables": variables}
-    response = make_api_request(body)
+    response = await make_api_request_async(body)
     if response.get("errors"):
         raise RuntimeError(response["errors"])  # includes AniList GraphQL errors
     data = response["data"]["Media"]
     return structureAnilistRelations({"data": data})
 
-
-def fetch_trailers(id: int) -> Dict[str, Any]:
+async def fetch_trailers(id: int) -> Dict[str, Any]:
     """Fetch and structure trailer info for a given anime id."""
     query = query_manager.get_query("trailers", "get_trailers")
     variables = {"id": id}
     body = {"query": query, "variables": variables}
-    response = make_api_request(body)
+    response = await make_api_request_async(body)
     if response.get("errors"):
         raise RuntimeError(response["errors"])  # includes AniList GraphQL errors
     data = response["data"]["Media"]
     return structureAnilistTrailer(data)
 
-
-def fetch_recommended(id: int, page: int = 1) -> Dict[str, Any]:
+async def fetch_recommended(id: int, page: int = 1) -> Dict[str, Any]:
     """Fetch recommendations for an anime, returning pageInfo and structured items."""
     query = query_manager.get_query("recommended", "get_recommended")
     variables = {"id": id, "page": page}
     body = {"query": query, "variables": variables}
-    response = make_api_request(body)
+    response = await make_api_request_async(body)
     if response.get("errors"):
         raise RuntimeError(response["errors"])  # includes AniList GraphQL errors
     media = response["data"]["Media"]

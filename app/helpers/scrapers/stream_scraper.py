@@ -1,4 +1,4 @@
-import requests
+import httpx
 from bs4 import BeautifulSoup
 from Crypto.Cipher import AES
 import base64
@@ -26,21 +26,22 @@ def decrypt_sources(encrypted_data, decryption_key):
     decrypted = cipher.decrypt(base64.b64decode(encrypted_data))
     return json.loads(decrypted.decode('utf-8').strip())
 
-def extract_vidcloud(url):
+async def extract_vidcloud(url):
     host = "https://megacloud.tv"
     id = url.split("/")[-1].split("?")[0]
 
-    # Fetch sources
-    response = requests.get(f"{host}/embed-2/ajax/e-1/getSources?id={id}", headers={"X-Requested-With": "XMLHttpRequest"})
-    req_data = response.json()
-    sources = req_data.get("sources")
-    tracks = req_data.get("tracks", [])
-    intro = req_data.get("intro", {})
-    outro = req_data.get("outro", {})
+    async with httpx.AsyncClient(follow_redirects=True) as client:
+        # Fetch sources
+        response = await client.get(f"{host}/embed-2/ajax/e-1/getSources?id={id}", headers={"X-Requested-With": "XMLHttpRequest"})
+        req_data = response.json()
+        sources = req_data.get("sources")
+        tracks = req_data.get("tracks", [])
+        intro = req_data.get("intro", {})
+        outro = req_data.get("outro", {})
 
-    # Fetch decryption key
-    decryption_key_resp = requests.get("https://zorotv.com.in/key/6").json()
-    decryption_key = decryption_key_resp.get("key")
+        # Fetch decryption key
+        decryption_key_resp = (await client.get("https://zorotv.com.in/key/6")).json()
+        decryption_key = decryption_key_resp.get("key")
 
     # Decrypt sources
     if sources:
@@ -55,18 +56,19 @@ def extract_vidcloud(url):
         "outro": outro if outro.get("end", 0) > 1 else None
     }
 
-    # Process HLS sources
-    for source in decrypted_sources:
-        if source["type"] == "hls":
-            data = requests.get(source["file"]).text
-            resolutions = [line for line in data.split("\n") if "RESOLUTION" in line]
-            for res in resolutions:
-                quality = res.split(",")[0].split("x")[1].strip()
-                result["sources"].append({"url": source["file"], "quality": f"{quality}p"})
+    async with httpx.AsyncClient(follow_redirects=True) as client:
+        # Process HLS sources
+        for source in decrypted_sources:
+            if source["type"] == "hls":
+                data = (await client.get(source["file"])).text
+                resolutions = [line for line in data.split("\n") if "RESOLUTION" in line]
+                for res in resolutions:
+                    quality = res.split(",")[0].split("x")[1].strip()
+                    result["sources"].append({"url": source["file"], "quality": f"{quality}p"})
 
     return result
 
-def get_stream(episode_id, server="vidcloud"):
+async def get_stream(episode_id, server="vidcloud"):
     if "$episode$" not in episode_id:
         raise ValueError("Invalid episode id")
 
@@ -74,22 +76,23 @@ def get_stream(episode_id, server="vidcloud"):
     episode_id = f"{BASE_URL}/watch/{episode_id.replace('$episode$', '?ep=').replace('$auto', '').replace('$sub', '').replace('$dub', '')}"
 
     try:
-        # Fetch episode servers
         episode_number = substring_after(episode_id, "?ep=")
-        response = requests.get(f"{BASE_URL}/ajax/v2/episode/servers?episodeId={episode_number}")
-        soup = BeautifulSoup(response.json().get("html", ""), "html.parser")
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            # Fetch episode servers
+            response = await client.get(f"{BASE_URL}/ajax/v2/episode/servers?episodeId={episode_number}")
+            soup = BeautifulSoup(response.json().get("html", ""), "html.parser")
 
-        # Retrieve server ID
-        server_id = retrieve_server_id(soup, 1, sub_or_dub)
-        if not server_id:
-            raise ValueError("RapidCloud server not found")
+            # Retrieve server ID
+            server_id = retrieve_server_id(soup, 1, sub_or_dub)
+            if not server_id:
+                raise ValueError("RapidCloud server not found")
 
-        # Fetch streaming link
-        link_resp = requests.get(f"{BASE_URL}/ajax/v2/episode/sources?id={server_id}")
-        streaming_link = link_resp.json().get("link")
+            # Fetch streaming link
+            link_resp = await client.get(f"{BASE_URL}/ajax/v2/episode/sources?id={server_id}")
+            streaming_link = link_resp.json().get("link")
 
         # Extract video sources
-        return extract_vidcloud(streaming_link)
+        return await extract_vidcloud(streaming_link)
 
     except Exception as e:
         raise RuntimeError(f"Error fetching stream: {e}")

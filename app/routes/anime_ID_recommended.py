@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Path, Query, Request
-import requests
+import httpx
 from typing import Any, Dict
 from app.services.anilist_service import fetch_recommended
 from app.helpers.response_envelope import success_response, error_response
@@ -13,10 +13,10 @@ async def animeRecommended(
     page: int = Query(1, ge=1, le=50)
 ) -> Dict[str, Any]:
     try:
-        recommended = fetch_recommended(id, page)
+        recommended = await fetch_recommended(id, page)
         meta = {"anime": {"id": id}, "pagination": recommended.get("pageInfo")}
         return success_response(request, data=recommended.get("recommendations"), meta=meta)
-    except requests.exceptions.RequestException as e:
+    except (httpx.RequestError, httpx.HTTPStatusError) as e:
         return error_response(request, status_code=500, message=str(e), error=str(e))
     except RuntimeError as e:
         return error_response(request, status_code=500, message=str(e), error=str(e))

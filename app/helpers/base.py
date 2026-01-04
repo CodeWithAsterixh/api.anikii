@@ -19,3 +19,13 @@ def slugify_anikii(name: str) -> str:
     # Collapse multiple hyphens
     s = re.sub(r"-+", "-", s)
     return s
+
+def substring_after(string: str, to_find: str) -> str:
+    """Returns the part of the string after the first occurrence of to_find."""
+    index = string.find(to_find)
+    return "" if index == -1 else string[index + len(to_find):]
+
+def substring_before(string: str, to_find: str) -> str:
+    """Returns the part of the string before the first occurrence of to_find."""
+    index = string.find(to_find)
+    return "" if index == -1 else string[:index]

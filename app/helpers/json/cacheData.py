@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional, Union
-from app.helpers.json.jsonParser import jsonLoad, jsonSave
+from app.helpers.json.json_loader import jsonLoad
+from app.helpers.json.json_writer import jsonSave
 from app.helpers.json.pageLocator import ensure_page_exists
 from app.structure.listItem import structureAnilistArray
 # Database helpers are imported lazily inside functions to avoid side effects during import time

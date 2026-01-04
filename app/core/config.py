@@ -33,6 +33,12 @@ class Settings:
         self.ALLOWED_ORIGINS: List[str] = _parse_allowed_origins(
             os.getenv("ALLOWED_ORIGINS")
         )
+        # API Key for administrative routes
+        self.API_KEY: Optional[str] = os.getenv("API_KEY", "anikii-secret-key")
+        # Global rate limit
+        self.DEFAULT_RATE_LIMIT: str = os.getenv("DEFAULT_RATE_LIMIT", "60/minute")
+        # Debug mode (disable in production)
+        self.DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
 
 
 _settings: Optional[Settings] = None

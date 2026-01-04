@@ -1,18 +1,10 @@
 import httpx
 from bs4 import BeautifulSoup
-from Crypto.Cipher import AES
-import base64
-import json
+from app.helpers.security import is_safe_url
+from app.helpers.base import substring_after, substring_before
+from app.helpers.scrapers.crypto_utils import decrypt_sources
 
 BASE_URL = "https://hianime.to/"
-
-def substring_after(string, to_find):
-    index = string.find(to_find)
-    return "" if index == -1 else string[index + len(to_find):]
-
-def substring_before(string, to_find):
-    index = string.find(to_find)
-    return "" if index == -1 else string[:index]
 
 def retrieve_server_id(soup, index, sub_or_dub):
     servers = soup.select(f"div.ps_-block.ps_-block-sub.servers-{sub_or_dub} > div.ps__-list > div")
@@ -21,24 +13,11 @@ def retrieve_server_id(soup, index, sub_or_dub):
             return server.get("data-id")
     return None
 
-def decrypt_sources(encrypted_data, decryption_key):
-    try:
-        key_bytes = decryption_key.encode('utf-8')
-        cipher = AES.new(key_bytes, AES.MODE_ECB)
-        decrypted = cipher.decrypt(base64.b64decode(encrypted_data))
-        # Remove potential padding and handle possible decoding issues
-        decrypted_text = decrypted.decode('utf-8', errors='ignore').strip()
-        # Find the first '{' and last '}' to isolate JSON if there's garbage
-        start_index = decrypted_text.find('{')
-        end_index = decrypted_text.rfind('}')
-        if start_index != -1 and end_index != -1:
-            decrypted_text = decrypted_text[start_index:end_index+1]
-        return json.loads(decrypted_text)
-    except Exception as e:
-        print(f"Decryption error: {e}")
-        return []
-
 async def extract_vidcloud(url):
+    if not is_safe_url(url):
+        print(f"Blocked unsafe vidcloud URL: {url}")
+        return {"sources": [], "subtitles": []}
+        
     host = "https://megacloud.tv"
     id = url.split("/")[-1].split("?")[0]
 

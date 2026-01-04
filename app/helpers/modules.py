@@ -53,7 +53,7 @@ async def get_id_each_provider(json_data: dict, anime_id: int) -> dict:
             "idPahe": id_pahe,
         }
 
-from app.services.anilist_service import fetch_anime_details
+from app.services.anilist_media_service import fetch_anime_details
 from app.helpers.base import slugify_anikii
 
 # Main function to fetch data and get provider IDs

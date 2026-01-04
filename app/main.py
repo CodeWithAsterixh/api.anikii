@@ -1,46 +1,56 @@
-from fastapi import FastAPI # type: ignore
+from fastapi import FastAPI, Request, HTTPException # type: ignore
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from starlette.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse, JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from secure import Secure
 
+from app.core.limiter import limiter
 from app.routes import (
-    anime_ID_stream_EP_extra,
     home,
     popular,
-    popular_upcoming,
-    popular_releases,
-    popular_releases_seasons,
-    popular_releases_seasons_SEASON,
-    popular_releases_seasons_SEASON_YEAR,
     search,
     genres,
-    genres_GENRE,
     fyp,
-    anime_ID,
-    anime_ID_relations,
-    anime_ID_characters,
-    anime_ID_recommended,
-    anime_ID_stream,
-    anime_ID_stream_EP,
-    anime_ID_stream_EP_dub,
-    anime_ID_trailers,
-    anime_ID_stream_external,
-    clear_specific_tmp_file,
-    select_specific_tmp_file,
-    save_data,
-    savedDatas
+    anime,
+    stream_metadata,
+    stream_actions,
+    admin
 )
 from app.core.config import get_settings
 from app.helpers.fetchHelpers import close_async_client, _get_async_client
 
 
 
-#load environment
+from app.core.exceptions import register_exception_handlers
+from app.helpers.response_envelope import success_response
+
+# load environment
 load_dotenv()
 
-# Initialize the FastAPI application
+# Initialize FastAPI app
 app = FastAPI(default_response_class=ORJSONResponse)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Register global exception handlers
+register_exception_handlers(app)
+
+# Initialize Secure headers
+secure_headers = Secure.with_default_headers()
+
+@app.middleware("http")
+async def set_secure_headers(request: Request, call_next):
+    response = await call_next(request)
+    secure_headers.set_headers(response)
+    # Additional security headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; object-src 'none';"
+    return response
 
 settings = get_settings()
 
@@ -57,60 +67,19 @@ app.add_middleware(GZipMiddleware, minimum_size=512)
 routes = [
     home.router,
     popular.router,
-    popular_releases.router,
-    popular_releases_seasons.router,
-    popular_releases_seasons_SEASON.router,
-    popular_releases_seasons_SEASON_YEAR.router,
     search.router,
     genres.router,
-    genres_GENRE.router,
     fyp.router,
-    anime_ID.router,
-    anime_ID_relations.router,
-    anime_ID_characters.router,
-    anime_ID_recommended.router,
-    anime_ID_stream.router,
-    anime_ID_stream_EP.router,
-    anime_ID_stream_EP_dub.router,
-    anime_ID_stream_EP_extra.router,
-    anime_ID_trailers.router,
-    popular_upcoming.router,
-    anime_ID_stream_external.router,
-    savedDatas.router,
-    clear_specific_tmp_file.router,
-    select_specific_tmp_file.router,
-    save_data.router,
+    anime.router,
+    stream_metadata.router,
+    stream_actions.router,
+    admin.router,
 ]
 
 
 # Include all routes in the application
 for route in routes:
     app.include_router(route)
-
-# Global exception handlers using standardized envelope
-from fastapi import Request, HTTPException
-from app.helpers.response_envelope import error_response, success_response
-from app.helpers.fetchHelpers import close_async_client
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    body = error_response(
-        request,
-        status_code=exc.status_code,
-        message=str(exc.detail) if exc.detail is not None else "HTTP error",
-        error={"type": "HTTPException"}
-    )
-    return ORJSONResponse(status_code=exc.status_code, content=body)
-
-@app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, exc: Exception):
-    body = error_response(
-        request,
-        status_code=500,
-        message="Server error",
-        error={"type": exc.__class__.__name__, "detail": str(exc)}
-    )
-    return ORJSONResponse(status_code=500, content=body)
 
 # Health check endpoint
 @app.get("/health")

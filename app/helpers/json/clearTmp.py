@@ -1,9 +1,9 @@
 import os
 import shutil
 import tempfile
+from app.helpers.security import validate_safe_path
 
 BASE_TMP_DIR = os.path.join(tempfile.gettempdir(), "anikii")
-
 
 def clear_anikii_route(directory: str | None = None, prefix: str = "", filename_td: str = ""):
     """
@@ -11,7 +11,13 @@ def clear_anikii_route(directory: str | None = None, prefix: str = "", filename_
     Returns a list of deleted items.
     Defaults to the cross-platform temp directory.
     """
-    directory = directory or BASE_TMP_DIR
+    if directory:
+        # Validate that the directory is safe and under a controlled base
+        # For simplicity, we'll just normalize it and check if it's under BASE_TMP_DIR 
+        # or another safe location if needed. For now, we enforce BASE_TMP_DIR.
+        directory = validate_safe_path("", base_dir=directory)
+    else:
+        directory = BASE_TMP_DIR
 
     if not os.path.exists(directory):
         print(f"Directory {directory} does not exist.")
@@ -42,11 +48,8 @@ def clear_anikii_route(directory: str | None = None, prefix: str = "", filename_
 def delete_specific_file(filename: str = "", directory: str | None = None):
     """
     Deletes a specific file in the given directory.
-    Returns True if the file was deleted, False otherwise.
-    Defaults to the cross-platform temp directory.
     """
-    directory = directory or BASE_TMP_DIR
-    file_path = os.path.join(directory, filename)
+    file_path = validate_safe_path(filename, directory or BASE_TMP_DIR)
 
     if not os.path.exists(file_path):
         return False

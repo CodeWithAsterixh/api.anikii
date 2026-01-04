@@ -1,0 +1,90 @@
+import os
+import logging
+from typing import List, Dict, Any, Optional
+from fastapi import HTTPException
+from app.helpers.json.getTmpLs import get_files_with_prefix
+from app.helpers.json.clearTmp import delete_specific_file, clear_anikii_route
+from app.helpers.json.json_writer import jsonWrite
+from app.database.collection import collection_name
+from app.database.addFile import findFileByName, addToDb
+from app.helpers.security import validate_safe_path
+
+logger = logging.getLogger(__name__)
+
+async def list_tmp_files() -> List[str]:
+    """List all files in the temp directory."""
+    return get_files_with_prefix()
+
+async def delete_tmp_file(name: str):
+    """Delete a specific temp file."""
+    # Ensure it's a .json file for safety if that's the convention
+    if not name.endswith(".json"):
+        name = f"{name}.json"
+    
+    # validate_safe_path will raise HTTPException if unsafe
+    safe_path = validate_safe_path(name)
+    
+    available_files = get_files_with_prefix()
+    if name in available_files:
+        delete_specific_file(name)
+        return True
+    return False
+
+async def save_tmp_to_db(name: str):
+    """Save a temp file reference to the database."""
+    if not name.endswith(".json"):
+        name = f"{name}.json"
+    
+    validate_safe_path(name)
+    
+    available_files = get_files_with_prefix()
+    if name in available_files:
+        name_db = name.replace(".json", "")
+        is_existed = collection_name.find_one({"name": name_db})
+        if not is_existed:
+            jsonWrite(name, True)
+        return True
+    
+    # If file doesn't exist locally, we can still try to "save" it via jsonWrite 
+    # (which seems to be the original behavior in select_specific_tmp_file.py)
+    try:
+        jsonWrite(name, True)
+        return True
+    except Exception as e:
+        logger.error(f"Error in save_tmp_to_db: {e}")
+        return False
+
+async def save_data_to_db(name: str, data: Any):
+    """Save arbitrary data to the database."""
+    existing = findFileByName(name)
+    if existing:
+        return {"exists": True, "data": existing}
+    
+    addToDb(name, data)
+    return {"exists": False, "data": {"name": name, "content": data}}
+
+async def list_db_saved_data() -> List[str]:
+    """List all saved data names from the database."""
+    return [
+        doc.get("name")
+        for doc in collection_name.find({}, {"name": 1, "_id": 0})
+        if doc.get("name")
+    ]
+
+async def clear_storage(storage: str):
+    """Clear local temp storage or database storage."""
+    if storage == "local":
+        files = get_files_with_prefix()
+        if files:
+            clear_anikii_route()
+            return files
+        return []
+    
+    if storage == "db":
+        db_items = await list_db_saved_data()
+        if db_items:
+            collection_name.delete_many({})
+            return db_items
+        return []
+    
+    raise ValueError(f"Invalid storage type: {storage}")

@@ -2,7 +2,7 @@ import os
 from typing import Dict, Any, List
 
 from app.helpers.json.cacheData import runCacheData, saveCacheData
-from app.helpers.json.jsonParser import jsonLoad
+from app.helpers.json.json_loader import jsonLoad
 from app.helpers.json.clearTmp import delete_specific_file
 
 

@@ -4,6 +4,7 @@ from uuid import uuid4
 from datetime import datetime, timezone
 
 from fastapi import Request
+from app.core.config import get_settings
 
 
 def _iso_utc_now() -> str:
@@ -63,16 +64,26 @@ def error_response(
     meta: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Build a standardized error response envelope."""
+    settings = get_settings()
+    
+    # Hide error details in production unless explicitly allowed
+    safe_message = message
+    safe_error = error
+    
+    if not settings.DEBUG and status_code >= 500:
+        safe_message = "Internal server error"
+        safe_error = {"type": "InternalError"}
+
     body: Dict[str, Any] = {
         "status": {
             "code": status_code,
             "success": False,
-            "message": message,
+            "message": safe_message,
         },
         "request": get_request_info(request),
         "meta": meta or {},
         "data": None,
     }
-    if error is not None:
-        body["error"] = error
+    if safe_error is not None:
+        body["error"] = safe_error
     return body

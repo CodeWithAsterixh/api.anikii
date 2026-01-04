@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urljoin, parse_qs
 from typing import Dict
 from app.helpers.extractors import generate_encrypt_ajax_parameters, decrypt_encrypt_ajax_response
+from app.helpers.security import is_safe_url
 
 # Constants
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
@@ -17,6 +18,10 @@ async def get_m3u8(iframe_url: str) -> Dict:
     Returns:
         dict: A dictionary containing Referer URL, sources, and backup sources.
     """
+    if not is_safe_url(iframe_url):
+        print(f"Blocked unsafe iframe URL: {iframe_url}")
+        raise ValueError("Unsafe iframe URL")
+        
     sources = []
     sources_bk = []
 

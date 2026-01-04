@@ -1,7 +1,5 @@
 import os
-import tempfile
-
-BASE_TMP_DIR = os.path.join(tempfile.gettempdir(), "anikii")
+from app.helpers.security import validate_safe_path, BASE_TMP_DIR
 
 
 def get_files_with_prefix(directory: str | None = None, prefix: str = ""):
@@ -9,7 +7,10 @@ def get_files_with_prefix(directory: str | None = None, prefix: str = ""):
     Returns a list of files and folders in the given directory that contain the specified prefix.
     Defaults to the cross-platform temp directory.
     """
-    directory = directory or BASE_TMP_DIR
+    if directory:
+        directory = validate_safe_path("", base_dir=directory)
+    else:
+        directory = BASE_TMP_DIR
 
     if not os.path.exists(directory):
         print(f"Directory {directory} does not exist.")

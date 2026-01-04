@@ -25,16 +25,28 @@ async def getVid(url: str) -> str:
         soup = BeautifulSoup(r.text, "html.parser")
     scripts = soup.find_all("script")
     video_url = None
-    # Regex to capture the video URL from the player.src call
-    pattern = re.compile(
-        r'player\.src\(\s*{\s*type:\s*"video/mp4",\s*src:\s*"([^"]+)"',
-        re.DOTALL
-    )
+    # Regex patterns to capture the video URL
+    patterns = [
+        re.compile(r'player\.src\(\s*{\s*type:\s*"video/mp4",\s*src:\s*"([^"]+)"', re.DOTALL),
+        re.compile(r'src:\s*"([^"]+mp4)"', re.DOTALL),
+        re.compile(r'source\s+src="([^"]+)"', re.DOTALL),
+    ]
+    
     for script in scripts:
         if script.string:
-            match = pattern.search(script.string)
-            if match:
-                video_url = match.group(1)
+            for pattern in patterns:
+                match = pattern.search(script.string)
+                if match:
+                    video_url = match.group(1)
+                    if not video_url.startswith("http"):
+                        # Handle protocol-relative URLs
+                        if video_url.startswith("//"):
+                            video_url = "https:" + video_url
+                        else:
+                            # Build absolute URL from base if needed
+                            video_url = f"{parsed_url.scheme}://{parsed_url.netloc}/{video_url.lstrip('/')}"
+                    break
+            if video_url:
                 break
 
     if video_url:

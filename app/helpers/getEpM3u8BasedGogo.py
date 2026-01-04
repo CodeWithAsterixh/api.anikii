@@ -6,10 +6,10 @@ from app.helpers.scrapers.m3u8Fetch import get_m3u8  # Ensure this is async
 
 # Constants
 BASE_URLS = [
+    "https://www14.gogoanimes.fi/",
     "https://gogoanime.co.at/",
     "https://anitaku.bz/",
     "https://gogoanime3.cc/",
-    "https://www14.gogoanimes.fi/",
     "https://9anime.org.lv/",
 ]
 USER_AGENT = (
@@ -34,7 +34,11 @@ async def get_episode(id: str, ep: str) -> Optional[Dict]:
     for base_url in BASE_URLS:
         try:
             # Adjust the `id` based on the base_url
-            if "anitaku" in base_url:
+            if "www14.gogoanimes.fi" in base_url:
+                # If base URL is www14.gogoanimes.fi, use the slug as provided
+                # The id passed here is already a slug from romaji title (from fetch_malsyn_data_and_get_provider)
+                formatted_id = f"{id}-episode-{ep}"
+            elif "anitaku" in base_url:
                 # If base URL is anitaku.bz, format id as "{id}-episode-{ep}"
                 formatted_id = f"{id}-episode-{ep}"
             elif "gogoanime.co.at" in base_url:

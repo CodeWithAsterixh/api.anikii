@@ -34,11 +34,11 @@ async def download_episode(
                 break
         
         if not mp4_link:
-             raise HTTPException(status_code=404, detail="mp4upload link not found")
+             raise HTTPException(status_code=404, detail="mp4upload link not found in episode metadata")
         
         video_url = await getVid(mp4_link)
         if not video_url:
-             raise HTTPException(status_code=500, detail="Failed to extract video URL")
+             raise HTTPException(status_code=404, detail=f"Failed to extract video source from mp4upload. The link may be dead: {mp4_link}")
         
         title = episode_data.get("episode_info", {}).get("title", f"anime_{id}_ep_{ep}")
         return await stream_video_content(video_url, mp4_link, title)
@@ -83,11 +83,11 @@ async def download_direct_stream(
             mp4_link = next((getattr(link, "url", None) for link in episode_data.get("stream_links", []) if getattr(link, "name", None) == "mp4upload"), None)
 
         if not mp4_link:
-            raise HTTPException(status_code=404, detail="No suitable stream link found")
+            raise HTTPException(status_code=404, detail="No suitable stream link (direct or mp4upload) found")
 
         video_url = await getVid(mp4_link)
         if not video_url:
-            raise HTTPException(status_code=500, detail="Failed to extract video URL")
+            raise HTTPException(status_code=404, detail=f"Failed to extract video source from mp4upload: {mp4_link}")
 
         return await stream_video_content(video_url, mp4_link, title, disable_ssl=disable_ssl)
     except HTTPException as e:
@@ -111,11 +111,11 @@ async def live_stream(
             mp4_link = next((getattr(link, "url", None) for link in episode_data.get("stream_links", []) if getattr(link, "name", None) == "mp4upload"), None)
 
         if not mp4_link:
-            raise HTTPException(status_code=404, detail="mp4upload link not found")
+            raise HTTPException(status_code=404, detail="mp4upload link not found for live stream")
 
         video_url = await getVid(mp4_link)
         if not video_url:
-            raise HTTPException(status_code=500, detail="Failed to extract video URL")
+            raise HTTPException(status_code=404, detail=f"Failed to extract live video source: {mp4_link}")
 
         return await stream_video_content(video_url, mp4_link, f"live_{id}_{ep}", content_type="application/octet-stream")
     except HTTPException as e:

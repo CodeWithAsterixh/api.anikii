@@ -58,16 +58,17 @@ from app.helpers.base import slugify_anikii
 
 # Main function to fetch data and get provider IDs
 async def fetch_malsyn_data_and_get_provider(anime_id: int):
-    """Build provider IDs using AniList details (romaji title) instead of MAL backup.
-    - idGogo: romaji title slug (lowercase, spaces -> hyphens)
-    - idGogoDub: romaji title slug with '-dub' suffix
+    """Build provider IDs using AniList details (English title prioritized, then romaji) instead of MAL backup.
+    - idGogo: English title slug (lowercase, spaces -> hyphens)
+    - idGogoDub: English title slug with '-dub' suffix
     - idZoro/idPahe: left empty
     """
     try:
         media = await fetch_anime_details(anime_id)
         title = media.get("title", {})
-        romaji = title.get("romaji") or ""
-        slug = slugify_anikii(romaji) if romaji else ""
+        # Prioritize English title as requested by user
+        name = title.get("english") or title.get("romaji") or ""
+        slug = slugify_anikii(name) if name else ""
 
         id_provider = {
             "idGogo": slug,

@@ -14,9 +14,14 @@ async def get_fyp_recommendations(collection: List[str], page: int = 1) -> List[
         })
         
         if main_res.get("errors"):
-            raise RuntimeError(main_res["errors"])
+            # Log error but continue with other IDs if possible, or raise
+            continue
         
-        nodes = main_res["data"]["Media"]["recommendations"]["nodes"]
+        media_data = main_res.get("data", {}).get("Media")
+        if not media_data:
+            continue
+            
+        nodes = media_data.get("recommendations", {}).get("nodes", [])
         recommendations = [
             {
                 "id": node["mediaRecommendation"]["id"],

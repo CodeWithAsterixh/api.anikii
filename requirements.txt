@@ -55,4 +55,4 @@ websocket-client==1.8.0
 wsproto==1.2.0
 pytest==8.3.3
 slowapi==0.1.9
-secure==0.3.0
+secure>=1.0.1

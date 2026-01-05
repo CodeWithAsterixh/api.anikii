@@ -6,7 +6,7 @@ from app.services.popular_service import (
     get_popular_releases_seasons, 
     get_popular_upcoming
 )
-from app.helpers.response_envelope import success_response, error_response
+from app.helpers.response_envelope import success_response
 from app.core.config import get_settings
 from app.core.limiter import limiter
 
@@ -16,20 +16,14 @@ router = APIRouter(prefix="/popular", tags=["popular"])
 @router.get("")
 @limiter.limit(settings.DEFAULT_RATE_LIMIT)
 async def popular(request: Request, page: int = Query(1, ge=1, le=50)) -> Dict[str, Any]:
-    try:
-        pageInfo, media = await get_popular(page)
-        return success_response(request, data=media, meta={"pagination": pageInfo})
-    except Exception as e:
-        return error_response(request, status_code=500, message="Failed to fetch popular media", error=str(e))
+    pageInfo, media = await get_popular(page)
+    return success_response(request, data=media, meta={"pagination": pageInfo})
 
 @router.get("/releases")
 @limiter.limit(settings.DEFAULT_RATE_LIMIT)
 async def popular_releases(request: Request, page: int = Query(1, ge=1)) -> Dict[str, Any]:
-    try:
-        pageInfo, media = await get_popular_releases(page)
-        return success_response(request, data=media, meta={"pagination": pageInfo})
-    except Exception as e:
-        return error_response(request, status_code=500, message="Failed to fetch popular releases", error=str(e))
+    pageInfo, media = await get_popular_releases(page)
+    return success_response(request, data=media, meta={"pagination": pageInfo})
 
 @router.get("/releases/seasons")
 @limiter.limit(settings.DEFAULT_RATE_LIMIT)
@@ -39,17 +33,11 @@ async def popular_releases_seasons(
     season: Optional[str] = Query(None),
     year: Optional[int] = Query(None)
 ) -> Dict[str, Any]:
-    try:
-        pageInfo, media = await get_popular_releases_seasons(page, season, year)
-        return success_response(request, data=media, meta={"pagination": pageInfo})
-    except Exception as e:
-        return error_response(request, status_code=500, message="Failed to fetch seasonal releases", error=str(e))
+    pageInfo, media = await get_popular_releases_seasons(page, season, year)
+    return success_response(request, data=media, meta={"pagination": pageInfo})
 
 @router.get("/upcoming")
 @limiter.limit(settings.DEFAULT_RATE_LIMIT)
 async def popular_upcoming(request: Request, page: int = Query(1, ge=1)) -> Dict[str, Any]:
-    try:
-        pageInfo, media = await get_popular_upcoming(page)
-        return success_response(request, data=media, meta={"pagination": pageInfo})
-    except Exception as e:
-        return error_response(request, status_code=500, message="Failed to fetch upcoming media", error=str(e))
+    pageInfo, media = await get_popular_upcoming(page)
+    return success_response(request, data=media, meta={"pagination": pageInfo})

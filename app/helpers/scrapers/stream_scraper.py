@@ -4,6 +4,8 @@ from app.helpers.security import is_safe_url
 from app.helpers.base import substring_after, substring_before
 from app.helpers.scrapers.crypto_utils import decrypt_sources
 
+from app.core.logger import logger
+
 BASE_URL = "https://hianime.to/"
 
 def retrieve_server_id(soup, index, sub_or_dub):
@@ -15,7 +17,7 @@ def retrieve_server_id(soup, index, sub_or_dub):
 
 async def extract_vidcloud(url):
     if not is_safe_url(url):
-        print(f"Blocked unsafe vidcloud URL: {url}")
+        logger.warning(f"Blocked unsafe vidcloud URL: {url}")
         return {"sources": [], "subtitles": []}
         
     host = "https://megacloud.tv"

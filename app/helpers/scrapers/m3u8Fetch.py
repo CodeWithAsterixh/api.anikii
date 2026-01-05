@@ -5,6 +5,8 @@ from typing import Dict
 from app.helpers.extractors import generate_encrypt_ajax_parameters, decrypt_encrypt_ajax_response
 from app.helpers.security import is_safe_url
 
+from app.core.logger import logger
+
 # Constants
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
 
@@ -19,7 +21,7 @@ async def get_m3u8(iframe_url: str) -> Dict:
         dict: A dictionary containing Referer URL, sources, and backup sources.
     """
     if not is_safe_url(iframe_url):
-        print(f"Blocked unsafe iframe URL: {iframe_url}")
+        logger.warning(f"Blocked unsafe iframe URL: {iframe_url}")
         raise ValueError("Unsafe iframe URL")
         
     sources = []
@@ -28,7 +30,7 @@ async def get_m3u8(iframe_url: str) -> Dict:
     # Parse the iframe URL
     parsed_url = urlparse(iframe_url)
     referer_url = parsed_url.geturl()
-    print(f"Fetching URL: {referer_url}")
+    logger.debug(f"Fetching URL: {referer_url}")
 
     headers = {"User-Agent": USER_AGENT, "X-Requested-With": "XMLHttpRequest"}
 
@@ -70,7 +72,7 @@ async def get_m3u8(iframe_url: str) -> Dict:
         sources_bk.append(source_bk)
 
     # Log the decrypted response (for debugging purposes)
-    print("Decrypted Response:", decrypted_response)
+    logger.debug(f"Decrypted Response for {iframe_url}: {decrypted_response}")
 
     # Return the result
     return {

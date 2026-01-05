@@ -5,22 +5,25 @@ from urllib.parse import urlparse
 from app.helpers.security import is_safe_url
 
 
+from app.core.logger import logger
+
+
 # Define a common browser user-agent string
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"
 
 # Your asynchronous video URL extractor function
 async def getVid(url: str) -> str:
     if not is_safe_url(url):
-        print(f"Blocked unsafe URL: {url}")
+        logger.warning(f"Blocked unsafe URL: {url}")
         return None
         
     parsed_url = urlparse(url)
     referer_url = parsed_url.geturl()
-    print(f"Fetching URL: {referer_url}")
+    logger.debug(f"Fetching URL: {referer_url}")
 
     async with httpx.AsyncClient(follow_redirects=True) as client:
         r = await client.get(referer_url, headers={"User-Agent": USER_AGENT})
-        print("Response status:", r.status_code)
+        logger.debug(f"Response status for {referer_url}: {r.status_code}")
         r.raise_for_status()
         soup = BeautifulSoup(r.text, "html.parser")
     scripts = soup.find_all("script")
@@ -50,10 +53,10 @@ async def getVid(url: str) -> str:
                 break
 
     if video_url:
-        print("Found video URL:", video_url)
+        logger.debug(f"Found video URL: {video_url}")
         return video_url
     else:
-        print("Video URL not found")
+        logger.debug(f"Video URL not found in {url}")
         return None
 
 

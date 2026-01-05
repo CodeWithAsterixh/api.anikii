@@ -37,6 +37,8 @@ class Settings:
         self.API_KEY: Optional[str] = os.getenv("API_KEY", "anikii-secret-key")
         # Global rate limit
         self.DEFAULT_RATE_LIMIT: str = os.getenv("DEFAULT_RATE_LIMIT", "60/minute")
+        # Cache TTL in seconds (default: 1 hour)
+        self.CACHE_TTL: int = int(os.getenv("CACHE_TTL", "3600"))
         # Debug mode (disable in production)
         self.DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
 

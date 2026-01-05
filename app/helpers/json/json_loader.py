@@ -1,24 +1,37 @@
 import os
 import json
 import tempfile
+import time
+from typing import Optional
 from app.helpers.security import validate_safe_path
+
+from app.core.logger import logger
 
 # Use a cross-platform temp directory
 BASE_TMP_DIR = os.path.join(tempfile.gettempdir(), "anikii")
 
-def jsonLoad(fileName: str) -> dict:
+def jsonLoad(fileName: str, ttl: Optional[int] = None) -> dict:
     """
-    Loads data from a JSON file if it exists; otherwise, returns an empty dictionary.
+    Loads data from a JSON file if it exists and is not expired; otherwise, returns an empty dictionary.
+    
+    Args:
+        fileName: Name of the file to load (without extension)
+        ttl: Optional time-to-live in seconds. If provided, file will be ignored if older than TTL.
     """
     json_path = validate_safe_path(f"{fileName}.json")
-    print(f"Loading data from {json_path}")
+    logger.debug(f"Loading data from {json_path}")
 
     if os.path.exists(json_path):
+        if ttl is not None:
+            mtime = os.path.getmtime(json_path)
+            if time.time() - mtime > ttl:
+                logger.info(f"Cache expired for {fileName} (mtime: {time.ctime(mtime)}, TTL: {ttl}s)")
+                return {}
         try:
             with open(json_path, "r", encoding="utf-8-sig") as file:
                 return json.load(file)
         except (json.JSONDecodeError, UnicodeDecodeError):
-            print("Error: JSON file is corrupted or has invalid encoding. Returning empty data.")
+            logger.error(f"JSON file {json_path} is corrupted or has invalid encoding. Returning empty data.")
             return {}
     return {}
 
@@ -28,7 +41,7 @@ def jsonLoadMeta(fileName: str) -> dict:
     """
     import time
     json_path = validate_safe_path(f"{fileName}.json")
-    print(f"Loading data from {json_path}")
+    logger.debug(f"Loading metadata from {json_path}")
 
     if os.path.exists(json_path):
         try:
@@ -52,7 +65,7 @@ def jsonLoadMeta(fileName: str) -> dict:
                 "name": f"{fileName}.json",
                 "type": "json",          
             }
-        except json.JSONDecodeError:
-            print("Error: JSON file is corrupted. Returning empty data.")
+        except Exception as e:
+            logger.error(f"Error reading metadata for {json_path}: {e}")
             return {}
     return {}

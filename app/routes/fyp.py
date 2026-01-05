@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, Query
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 from app.services.fyp_service import get_fyp_recommendations
-from app.helpers.response_envelope import success_response, error_response
+from app.helpers.response_envelope import success_response
 from app.core.config import get_settings
 from app.core.limiter import limiter
 
@@ -20,15 +20,12 @@ async def get_fyp(
     page: int = Query(1, ge=1, le=50)
 ) -> Dict[str, Any]:
     """Fetch personalized recommendations based on a collection of anime IDs."""
-    try:
-        recommendations = await get_fyp_recommendations(fyp_request.collection, page)
-        meta = {
-            "fyp": {
-                "count": len(recommendations),
-                "ids": fyp_request.collection,
-                "page": page
-            }
+    recommendations = await get_fyp_recommendations(fyp_request.collection, page)
+    meta = {
+        "fyp": {
+            "count": len(recommendations),
+            "ids": fyp_request.collection,
+            "page": page
         }
-        return success_response(request, data=recommendations, meta=meta)
-    except Exception as e:
-        return error_response(request, status_code=500, message="Failed to fetch FYP recommendations", error=str(e))
+    }
+    return success_response(request, data=recommendations, meta=meta)

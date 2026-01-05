@@ -1,5 +1,6 @@
 import os
 import socket
+import ipaddress
 from urllib.parse import urlparse
 from fastapi import Header, HTTPException, Request
 from app.core.config import get_settings
@@ -28,7 +29,7 @@ def validate_safe_path(filename: str, base_dir: str = BASE_TMP_DIR) -> str:
 def is_safe_url(url: str) -> bool:
     """
     Check if a URL is safe to fetch (prevents SSRF).
-    Blocks local and private IP ranges.
+    Blocks local and private IP ranges using robust CIDR checks.
     """
     try:
         parsed = urlparse(url)
@@ -39,27 +40,40 @@ def is_safe_url(url: str) -> bool:
         if not host:
             return False
         
-        # Resolve hostname to IP
-        # Note: In a high-traffic async app, you'd use an async resolver.
-        # For this API's current scale, gethostbyname is acceptable during validation.
-        ip = socket.gethostbyname(host)
-        
-        # Private/Reserved IP ranges
-        # 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8, 169.254.0.0/16, 0.0.0.0
-        private_prefixes = (
-            "127.", "10.", "192.168.", "169.254.", "0.0.0.0", "localhost"
-        )
-        if any(ip.startswith(prefix) for prefix in private_prefixes):
+        # 1. Check if host is an IP address string directly
+        try:
+            ip = ipaddress.ip_address(host)
+            if _is_ip_unsafe(ip):
+                return False
+            return True
+        except ValueError:
+            # Not an IP string, proceed to DNS resolution
+            pass
+
+        # 2. Resolve hostname to all possible IPs (IPv4 and IPv6)
+        try:
+            # getaddrinfo returns a list of tuples: (family, type, proto, canonname, sockaddr)
+            # sockaddr is (address, port) for IPv4/v6
+            addr_info = socket.getaddrinfo(host, None)
+            for item in addr_info:
+                ip_str = item[4][0]
+                ip = ipaddress.ip_address(ip_str)
+                if _is_ip_unsafe(ip):
+                    return False
+        except socket.gaierror:
             return False
             
-        # 172.16.0.0/12 (172.16.x.x to 172.31.x.x)
-        if ip.startswith("172."):
-            parts = ip.split(".")
-            if len(parts) >= 2:
-                second_octet = int(parts[1])
-                if 16 <= second_octet <= 31:
-                    return False
-        
         return True
     except Exception:
         return False
+
+def _is_ip_unsafe(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """Check if an IP address is private, loopback, link-local, or otherwise unsafe."""
+    return (
+        ip.is_private or 
+        ip.is_loopback or 
+        ip.is_link_local or 
+        ip.is_multicast or 
+        ip.is_reserved or 
+        ip.is_unspecified
+    )

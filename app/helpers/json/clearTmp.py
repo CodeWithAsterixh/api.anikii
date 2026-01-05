@@ -3,6 +3,8 @@ import shutil
 import tempfile
 from app.helpers.security import validate_safe_path
 
+from app.core.logger import logger
+
 BASE_TMP_DIR = os.path.join(tempfile.gettempdir(), "anikii")
 
 def clear_anikii_route(directory: str | None = None, prefix: str = "", filename_td: str = ""):
@@ -20,7 +22,7 @@ def clear_anikii_route(directory: str | None = None, prefix: str = "", filename_
         directory = BASE_TMP_DIR
 
     if not os.path.exists(directory):
-        print(f"Directory {directory} does not exist.")
+        logger.warning(f"Directory {directory} does not exist.")
         return []
 
     deleted_files = []  # Store deleted filenames
@@ -37,11 +39,11 @@ def clear_anikii_route(directory: str | None = None, prefix: str = "", filename_
                     shutil.rmtree(file_path)
 
                 deleted_files.append(file_path)  # Track deleted file/folder
-                print(f"Deleted: {file_path}")
+                logger.info(f"Deleted: {file_path}")
             except Exception as e:
-                print(f"Failed to delete {file_path}: {e}")
+                logger.error(f"Failed to delete {file_path}: {e}")
 
-    print(f"Cleared all paths starting with '{prefix}' in {directory}.")
+    logger.info(f"Cleared all paths starting with '{prefix}' in {directory}.")
     return deleted_files  # Return list of deleted files
 
 

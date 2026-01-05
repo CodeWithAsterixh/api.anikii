@@ -6,14 +6,21 @@ from app.structure.listItem import structureAnilistArray
 # Database helpers are imported lazily inside functions to avoid side effects during import time
 
 
-def runCacheData(page: Optional[int], filePath: str) -> Optional[Union[Dict[str, Any], List[Any]]]:
+from app.core.config import get_settings
+from app.core.logger import logger
+
+settings = get_settings()
+
+def runCacheData(page: Optional[int], filePath: str, ttl: Optional[int] = None) -> Optional[Union[Dict[str, Any], List[Any]]]:
     """
-    Return cached data if available.
+    Return cached data if available and not expired.
     - If page is None, returns the entire cached object (e.g., dict for paginated caches or list for collections) or None.
     - If page is provided and exists, returns a dict with pageInfo and data for that page.
-    - Returns None when cache is not available for the requested page.
+    - Returns None when cache is not available or expired for the requested page.
     """
-    loadData = jsonLoad(filePath)
+    # Use global default TTL if not specified
+    load_ttl = ttl if ttl is not None else settings.CACHE_TTL
+    loadData = jsonLoad(filePath, ttl=load_ttl)
 
     # If no specific page requested, return whatever is cached (may be dict or list)
     if page is None:
@@ -56,10 +63,10 @@ def saveCacheData(pageInfo: Dict[str, Any], media: List[Dict[str, Any]], filePat
         findDb = findFileByName(f"{filePath}.json")
         if findDb:
             updateInDb(f"{filePath}.json", {"$set": {f"data.pages.{page}": structuredData}})
-            print("up-db")
+            logger.info(f"Updated database cache for {filePath}.json")
     except Exception as e:
         # Skip DB persistence if unavailable
-        print(f"skip-db: {e}")
+        logger.warning(f"Skipped database cache update for {filePath}: {e}")
 
     # Persist to JSON file
     jsonSave(filePath, page, {"lastPage": lastPage, "data": structuredData})

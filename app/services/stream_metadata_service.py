@@ -39,6 +39,23 @@ async def get_episode_extra(id: int, ep: int) -> Dict[str, Any]:
     episode_sub = await get_episode(gogoId, ep) if gogoId else {}
     episode_dub = await get_episode(gogoIdDub, ep) if gogoIdDub else {}
     
+    # Map servers to stream_links for frontend compatibility
+    if episode_sub:
+        links = []
+        if episode_sub.get("stream"):
+            links.append({"name": "HLS Stream", "url": episode_sub["stream"]})
+        if "servers" in episode_sub:
+            links.extend([{"name": k, "url": v} for k, v in episode_sub["servers"].items()])
+        episode_sub["stream_links"] = links
+
+    if episode_dub:
+        links = []
+        if episode_dub.get("stream"):
+            links.append({"name": "HLS Stream", "url": episode_dub["stream"]})
+        if "servers" in episode_dub:
+            links.extend([{"name": k, "url": v} for k, v in episode_dub["servers"].items()])
+        episode_dub["stream_links"] = links
+    
     # Also fetch the full list of episodes and max episode count
     episodes_list = await get_anime_episodes(id)
     total_episodes = await get_anime_max_episodes(id)

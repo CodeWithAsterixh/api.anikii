@@ -117,7 +117,7 @@ async def live_stream(
         if not video_url:
             raise HTTPException(status_code=404, detail=f"Failed to extract live video source: {mp4_link}")
 
-        return await stream_video_content(video_url, mp4_link, f"live_{id}_{ep}", content_type="application/octet-stream")
+        return await stream_video_content(video_url, mp4_link, f"live_{id}_{ep}", content_type="video/mp4")
     except HTTPException as e:
         return error_response(request, status_code=e.status_code, message=e.detail)
     except Exception as e:

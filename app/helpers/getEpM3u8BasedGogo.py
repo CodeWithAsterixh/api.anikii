@@ -75,49 +75,76 @@ async def get_episode(id: str, ep: str) -> Optional[Dict]:
             iframe_elem = soup.select_one("div.player-embed iframe")
             iframe_url = iframe_elem.get("src") if iframe_elem and "src" in iframe_elem.attrs else None
 
-            # Scrape server list
+            # Scrape server list with grouping (SUB/DUB/HSUB)
             servers = {}
-            # Support multiple selectors for different GogoAnime versions
-            # gogoanimes.fi uses 'div.anime_muti_link ul li'
-            # gogoanimez.cc uses 'ul.muti_link li'
-            server_list = soup.select("div.anime_muti_link ul li, ul.muti_link li")
-
-            if server_list:
-                for server in server_list:
-                    anchor = server.find("a")
-                    if anchor and anchor.has_attr("data-video"):
-                        video_url = anchor["data-video"]
-                        if video_url.startswith("//"):
-                            video_url = f"https:{video_url}"
-
-                        # Extract server name from the anchor text
-                        server_name = ""
-                        for content in anchor.contents:
-                            if isinstance(content, str):
-                                text = content.strip()
-                                if text:
-                                    server_name = text
-                                    break
+            grouped_servers = {"SUB": {}, "DUB": {}, "HSUB": {}}
+            
+            # Find all server sections
+            server_sections = soup.select("div.server-items")
+            
+            if server_sections:
+                for section in server_sections:
+                    data_type = section.get("data-type", "SUB").upper()
+                    if data_type not in grouped_servers:
+                        grouped_servers[data_type] = {}
                         
-                        if not server_name:
-                            # Fallback: get text but exclude span content
-                            # Create a copy to not modify the original soup if needed, 
-                            # but here we can just iterate children
+                    server_list = section.select("ul.muti_link li.server")
+                    for server in server_list:
+                        anchor = server.find("a")
+                        if anchor and anchor.has_attr("data-video"):
+                            video_url = anchor["data-video"]
+                            if video_url.startswith("//"):
+                                video_url = f"https:{video_url}"
+                            
+                            server_name = ""
                             for child in anchor.children:
                                 if hasattr(child, 'name') and child.name not in ["span", "i"]:
                                     text = child.get_text(strip=True)
                                     if text:
                                         server_name = text
                                         break
-                        
-                        if not server_name:
-                            # Last resort fallback to first class or "server"
-                            server_classes = server.get("class", [])
-                            server_name = server_classes[0] if server_classes and server_classes[0] != "anime" else "Unknown"
+                            
+                            if not server_name:
+                                # Fallback to first text content
+                                server_name = anchor.find(text=True, recursive=False)
+                                if server_name:
+                                    server_name = server_name.strip()
+                            
+                            if not server_name:
+                                server_name = "Unknown"
+                                
+                            grouped_servers[data_type][server_name] = video_url
+                            # Keep backward compatibility for the first/default servers list
+                            if server_name not in servers:
+                                servers[server_name] = video_url
+            else:
+                # Fallback to legacy selectors
+                server_list = soup.select("div.anime_muti_link ul li, ul.muti_link li")
+                if server_list:
+                    for server in server_list:
+                        anchor = server.find("a")
+                        if anchor and anchor.has_attr("data-video"):
+                            video_url = anchor["data-video"]
+                            if video_url.startswith("//"):
+                                video_url = f"https:{video_url}"
 
-                        servers[server_name] = video_url
-            
-            if not servers:
+                            server_name = ""
+                            for child in anchor.children:
+                                if hasattr(child, 'name') and child.name not in ["span", "i"]:
+                                    text = child.get_text(strip=True)
+                                    if text:
+                                        server_name = text
+                                        break
+                            
+                            if not server_name:
+                                server_classes = server.get("class", [])
+                                server_name = server_classes[0] if server_classes and server_classes[0] != "anime" else "Unknown"
+
+                            servers[server_name] = video_url
+                            # Assume legacy is SUB if not specified
+                            grouped_servers["SUB"][server_name] = video_url
+
+            if not servers and not any(grouped_servers.values()):
                 print(f"No servers found for {link}")
                 continue
             # Get M3U8 stream using iframe URL
@@ -140,6 +167,7 @@ async def get_episode(id: str, ep: str) -> Optional[Dict]:
                 "episodes": episode_count,
                 "stream": m3u8,
                 "servers": servers,
+                "grouped_servers": grouped_servers,
             }
 
         except Exception as e:

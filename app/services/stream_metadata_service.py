@@ -40,21 +40,51 @@ async def get_episode_extra(id: int, ep: int) -> Dict[str, Any]:
     episode_dub = await get_episode(gogoIdDub, ep) if gogoIdDub else {}
     
     # Map servers to stream_links for frontend compatibility
-    if episode_sub:
+    # Also support grouped servers if available
+    def process_episode_links(episode_data):
+        if not episode_data:
+            return
+            
         links = []
-        if episode_sub.get("stream"):
-            links.append({"name": "HLS Stream", "url": episode_sub["stream"]})
-        if "servers" in episode_sub:
-            links.extend([{"name": k, "url": v} for k, v in episode_sub["servers"].items()])
-        episode_sub["stream_links"] = links
+        if episode_data.get("stream"):
+            links.append({"name": "HLS Stream", "url": episode_data["stream"]})
+            
+        # Add grouped servers if available
+        grouped = episode_data.get("grouped_servers", {})
+        if grouped:
+            for group_name, group_links in grouped.items():
+                if group_links:
+                    # Use a dict to ensure uniqueness by name (case-insensitive)
+                    unique_group_links = {}
+                    for k, v in group_links.items():
+                        name_upper = k.upper()
+                        if name_upper not in unique_group_links:
+                            unique_group_links[name_upper] = {"name": k, "url": v}
+                    
+                    group_list = list(unique_group_links.values())
+                    episode_data[f"links_{group_name.lower()}"] = group_list
+                    
+                    # For backward compatibility, also put them in stream_links if it's the main group
+                    if group_name == "SUB":
+                        for link in group_list:
+                            if not any(l["name"].upper() == link["name"].upper() for l in links):
+                                links.append(link)
+                    elif group_name == "DUB" and not episode_data.get("stream_links"):
+                        for link in group_list:
+                            if not any(l["name"].upper() == link["name"].upper() for l in links):
+                                links.append(link)
+        elif "servers" in episode_data:
+            unique_servers = {}
+            for k, v in episode_data["servers"].items():
+                name_upper = k.upper()
+                if name_upper not in unique_servers:
+                    unique_servers[name_upper] = {"name": k, "url": v}
+            links.extend(list(unique_servers.values()))
+            
+        episode_data["stream_links"] = links
 
-    if episode_dub:
-        links = []
-        if episode_dub.get("stream"):
-            links.append({"name": "HLS Stream", "url": episode_dub["stream"]})
-        if "servers" in episode_dub:
-            links.extend([{"name": k, "url": v} for k, v in episode_dub["servers"].items()])
-        episode_dub["stream_links"] = links
+    process_episode_links(episode_sub)
+    process_episode_links(episode_dub)
     
     # Also fetch the full list of episodes and max episode count
     episodes_list = await get_anime_episodes(id)

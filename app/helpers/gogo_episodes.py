@@ -86,23 +86,51 @@ async def scrape_gogo_episode_list(url: str, soup: Optional[BeautifulSoup] = Non
 async def get_max_episodes_from_gogo(url: str, soup: Optional[BeautifulSoup] = None) -> int:
     """
     Unified tool to get the maximum episode number from a GogoAnime page.
-    It tries scraping the episode list first, then falls back to the pagination metadata.
+    Prioritizes the #episode_page list to extract the highest episode number.
     """
-    scraped_episodes = await scrape_gogo_episode_list(url, soup)
-    max_episode = get_highest_episode(scraped_episodes)
-    
-    if max_episode == 0 and soup:
-        max_ep_available = soup.select_one('ul#episode_page')
-        if max_ep_available:
+    if not soup:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
+        }
+        try:
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                response = await client.get(url, headers=headers)
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, "html.parser")
+        except Exception as e:
+            print(f"Error fetching {url} for max episodes: {e}")
+
+    max_episode = 0
+
+    # 1. Prioritize ul#episode_page which contains the ranges (e.g., 1101-1155)
+    if soup:
+        episode_page_ul = soup.select_one('ul#episode_page')
+        if episode_page_ul:
             try:
-                # Find the last pagination link which usually has the end episode number
-                last_li = max_ep_available.select('li')
-                if last_li:
-                    last_a = last_li[-1].find('a')
+                list_items = episode_page_ul.select('li')
+                if list_items:
+                    # Get the last li which contains the highest range
+                    last_a = list_items[-1].find('a')
                     if last_a:
-                        max_episode = int(last_a.get('ep_end', 0))
-            except (ValueError, TypeError, AttributeError):
+                        # Try ep_end attribute first (common on Gogo)
+                        ep_end = last_a.get('ep_end')
+                        if ep_end and ep_end.isdigit():
+                            max_episode = int(ep_end)
+                        else:
+                            # Fallback: Parse from text or data-value (e.g., "1101-1155")
+                            val = last_a.get('data-value') or last_a.get_text(strip=True)
+                            if "-" in val:
+                                max_episode = int(val.split("-")[-1])
+                            elif val.isdigit():
+                                max_episode = int(val)
+            except (ValueError, TypeError, AttributeError, IndexError) as e:
+                print(f"Error parsing episode_page: {e}")
                 max_episode = 0
+
+    # 2. Fallback to scraping the episode list if pagination wasn't helpful
+    if max_episode == 0:
+        scraped_episodes = await scrape_gogo_episode_list(url, soup)
+        max_episode = get_highest_episode(scraped_episodes)
                 
     return max_episode
 

@@ -72,7 +72,7 @@ async def fetch_malsyn_data_and_get_provider(anime_id: int):
 
         id_provider = {
             "idGogo": slug,
-            "idGogoDub": f"{slug}-dub" if slug else "",
+            "idGogoDub": f"{slug}" if slug else "",
             "idZoro": "",
             "idPahe": "",
         }

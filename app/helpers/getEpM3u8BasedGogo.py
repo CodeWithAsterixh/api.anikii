@@ -1,5 +1,7 @@
 import httpx  # Replace `requests` with `httpx`
+from app.helpers.gogo_episodes import get_max_episodes_from_gogo
 from bs4 import BeautifulSoup
+import httpx
 from urllib.parse import urljoin
 from typing import Dict, Optional
 from app.helpers.scrapers.m3u8Fetch import get_m3u8  # Ensure this is async
@@ -66,11 +68,8 @@ async def get_episode(id: str, ep: str) -> Optional[Dict]:
             html = response.text
             soup = BeautifulSoup(html, "html.parser")
 
-            # Scrape episode count
-            episode_count_elem = soup.select_one("ul#episode_page li a.active")
-            episode_count = (
-                episode_count_elem.get("ep_end") if episode_count_elem and "ep_end" in episode_count_elem.attrs else None
-            )
+            # Scrape total episode count using the unified tool
+            episode_count = await get_max_episodes_from_gogo(link, soup)
 
             # Scrape iframe URL
             iframe_elem = soup.select_one("div.player-embed iframe")

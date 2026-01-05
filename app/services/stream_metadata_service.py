@@ -3,7 +3,7 @@ from app.queries.query_manager import query_manager
 from app.helpers.fetchHelpers import make_api_request_async
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
 from app.helpers.getEpM3u8BasedGogo import get_episode, BASE_URLS
-from app.helpers.gogo_episodes import scrape_gogo_episode_list, get_highest_episode
+from app.helpers.gogo_episodes import scrape_gogo_episode_list, get_highest_episode, get_max_episodes_from_gogo
 
 async def get_stream_data(id: int) -> Dict[str, Any]:
     """Fetch raw stream metadata from AniList."""
@@ -39,9 +39,11 @@ async def get_episode_extra(id: int, ep: int) -> Dict[str, Any]:
     episode_sub = await get_episode(gogoId, ep) if gogoId else {}
     episode_dub = await get_episode(gogoIdDub, ep) if gogoIdDub else {}
     
-    # Also fetch the full list of episodes
+    # Also fetch the full list of episodes and max episode count
     episodes_list = await get_anime_episodes(id)
-    total_episodes = get_highest_episode(episodes_list) if episodes_list else data.get("episodes")
+    total_episodes = await get_anime_max_episodes(id)
+    if total_episodes == 0:
+        total_episodes = data.get("episodes", 0)
     
     return {
         "episodesSub": episode_sub,
@@ -51,7 +53,7 @@ async def get_episode_extra(id: int, ep: int) -> Dict[str, Any]:
             "title": title,
             "thumbnail": thumbnail,
             "episodes": {
-                "currentEpisode": total_episodes,
+                "currentEpisode": ep,
                 "lastEpisode": total_episodes,
             }
         },
@@ -61,6 +63,43 @@ async def get_episode_extra(id: int, ep: int) -> Dict[str, Any]:
             "hasDub": bool(episode_dub),
         }
     }
+
+async def get_anime_max_episodes(id: int) -> int:
+    """Fetch the maximum episode number for an anime from GogoAnime."""
+    idSub = await fetch_malsyn_data_and_get_provider(id)
+    gogoId = idSub.get("id_provider", {}).get("idGogo")
+    if not gogoId:
+        return 0
+
+    from urllib.parse import urljoin
+    
+    # Try preferred domains first
+    preferred_domains = [
+        "https://gogoanimez.cc/watch/",
+        "https://www14.gogoanimes.fi/"
+    ]
+    
+    # Also include others from BASE_URLS
+    other_domains = [url for url in BASE_URLS if url not in preferred_domains]
+    all_domains = preferred_domains + other_domains
+
+    for base_url in all_domains:
+        url = urljoin(base_url, gogoId)
+        if "gogoanimez.cc/watch/" in base_url and not url.endswith("/"):
+             url += "/"
+             
+        if "gogoanimez.cc/watch/" in base_url:
+            urls_to_try = [url, f"{url.rstrip('/')}-episode-1"]
+        else:
+            urls_to_try = [f"{base_url.rstrip('/')}/{gogoId}-episode-1"]
+
+        for target_url in urls_to_try:
+            # Use the unified tool
+            max_ep = await get_max_episodes_from_gogo(target_url)
+            if max_ep > 0:
+                return max_ep
+            
+    return 0
 
 async def get_anime_episodes(id: int) -> List[Dict[str, Any]]:
     """Fetch the full list of episodes for an anime from GogoAnime."""

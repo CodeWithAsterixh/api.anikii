@@ -7,8 +7,8 @@ from app.services.anilist_media_service import (
     fetch_recommended,
     fetch_trailers
 )
-from app.services.stream_metadata_service import get_anime_episodes
-from app.helpers.gogo_episodes import get_highest_episode
+from app.services.stream_metadata_service import get_anime_episodes, get_anime_max_episodes
+from app.helpers.gogo_episodes import get_highest_episode, get_max_episodes_from_gogo
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
 from app.structure.anime_details import structureAnilistDetails
 from app.helpers.response_envelope import success_response, error_response
@@ -26,14 +26,19 @@ async def get_anime_info(request: Request, id: int = Path(..., ge=1)) -> Dict[st
         data = await fetch_anime_details(id)
         idSub = await fetch_malsyn_data_and_get_provider(data["id"])
         
-        # Scrape total episodes from GogoAnime
-        gogo_episodes = await get_anime_episodes(id)
-        total_episodes = get_highest_episode(gogo_episodes) if gogo_episodes else data.get("episodes", 0)
+        # Scrape total episodes from GogoAnime using the unified tool
+        total_episodes = await get_anime_max_episodes(id)
+        if total_episodes == 0:
+            total_episodes = data.get("episodes", 0)
         
         detailsData = structureAnilistDetails({"data": data, "idSub": idSub})
         
         # Replace the current episode value (total length)
-        detailsData["episodes"] = total_episodes
+        
+        detailsData = {
+            **detailsData,
+            "episodes":total_episodes
+        }
         
         return success_response(request, data=detailsData)
     except Exception as e:

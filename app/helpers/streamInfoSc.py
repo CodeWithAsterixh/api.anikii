@@ -2,7 +2,7 @@ import httpx
 from bs4 import BeautifulSoup
 from typing import List, Dict
 
-from app.helpers.gogo_episodes import scrape_gogo_episode_list, get_highest_episode
+from app.helpers.gogo_episodes import scrape_gogo_episode_list, get_highest_episode, get_max_episodes_from_gogo
 
 # Define the types for the result (similar to your StreamInfo and StreamLink in TypeScript)
 class StreamLink:
@@ -36,16 +36,7 @@ async def parse_streaming_info(url: str) -> StreamInfo:
     
     # Extract the maximum episode number from the page
     # Fallback to the new scraper for more accurate results if needed
-    scraped_episodes = await scrape_gogo_episode_list(url)
-    max_episode = get_highest_episode(scraped_episodes)
-    
-    if max_episode == 0:
-        max_ep_available = soup.select_one('ul#episode_page')
-        if max_ep_available:
-            try:
-                max_episode = int(max_ep_available.select('li')[-1].find('a').get('ep_end', 0))
-            except (ValueError, TypeError, AttributeError):
-                max_episode = 0
+    max_episode = await get_max_episodes_from_gogo(url, soup)
     
     # Extract anime information
     anime_info = {

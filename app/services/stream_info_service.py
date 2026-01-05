@@ -6,6 +6,7 @@ from app.services.anime_downloader_service import resolve_stream_with_anime_down
 from app.helpers.streamInfoSc import parse_streaming_info
 from app.helpers.base import BASEURL
 from app.helpers.getEpM3u8BasedGogo import get_episode
+from app.services.stream_metadata_service import get_anime_max_episodes
 from app.queries.query_manager import query_manager
 from app.helpers.fetchHelpers import make_api_request_async
 
@@ -64,6 +65,11 @@ async def get_episode_extra(id: int, ep: int) -> Dict[str, Any]:
     episode_sub = await get_episode(gogoId, ep) if gogoId else {}
     episode_dub = await get_episode(gogoIdDub, ep) if gogoIdDub else {}
     
+    # Scrape total episodes from GogoAnime using the unified tool
+    total_episodes = await get_anime_max_episodes(id)
+    if total_episodes == 0:
+        total_episodes = data.get("episodes", 0)
+    
     return {
         "episodesSub": episode_sub,
         "episodesDub": episode_dub,
@@ -72,7 +78,7 @@ async def get_episode_extra(id: int, ep: int) -> Dict[str, Any]:
             "thumbnail": thumbnail,
             "episodes": {
                 "currentEpisode": ep,
-                "lastEpisode": data.get("episodes"),
+                "lastEpisode": total_episodes,
             }
         },
         "meta": {

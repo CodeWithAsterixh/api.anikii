@@ -2,27 +2,28 @@ import httpx
 from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
 
-async def scrape_gogo_episode_list(url: str) -> List[Dict]:
+async def scrape_gogo_episode_list(url: str, soup: Optional[BeautifulSoup] = None) -> List[Dict]:
     """
     Scrapes the episode list from GogoAnime domains (gogoanimez.cc and gogoanimes.fi).
     Both use a similar structure for the episode list in the 'load_ep' section.
     """
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
-    }
-    
-    try:
-        async with httpx.AsyncClient(follow_redirects=True) as client:
-            response = await client.get(url, headers=headers)
-            if response.status_code != 200:
-                print(f"Failed to fetch {url}: {response.status_code}")
-                return []
-            html = response.text
-    except Exception as e:
-        print(f"Error fetching {url}: {e}")
-        return []
+    if not soup:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
+        }
+        
+        try:
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                response = await client.get(url, headers=headers)
+                if response.status_code != 200:
+                    print(f"Failed to fetch {url}: {response.status_code}")
+                    return []
+                html = response.text
+                soup = BeautifulSoup(html, "html.parser")
+        except Exception as e:
+            print(f"Error fetching {url}: {e}")
+            return []
 
-    soup = BeautifulSoup(html, "html.parser")
     episodes = []
     
     # Both domains use #episode_related inside #load_ep
@@ -81,6 +82,29 @@ async def scrape_gogo_episode_list(url: str) -> List[Dict]:
         })
         
     return episodes
+
+async def get_max_episodes_from_gogo(url: str, soup: Optional[BeautifulSoup] = None) -> int:
+    """
+    Unified tool to get the maximum episode number from a GogoAnime page.
+    It tries scraping the episode list first, then falls back to the pagination metadata.
+    """
+    scraped_episodes = await scrape_gogo_episode_list(url, soup)
+    max_episode = get_highest_episode(scraped_episodes)
+    
+    if max_episode == 0 and soup:
+        max_ep_available = soup.select_one('ul#episode_page')
+        if max_ep_available:
+            try:
+                # Find the last pagination link which usually has the end episode number
+                last_li = max_ep_available.select('li')
+                if last_li:
+                    last_a = last_li[-1].find('a')
+                    if last_a:
+                        max_episode = int(last_a.get('ep_end', 0))
+            except (ValueError, TypeError, AttributeError):
+                max_episode = 0
+                
+    return max_episode
 
 def get_highest_episode(episodes: List[Dict]) -> int:
     """

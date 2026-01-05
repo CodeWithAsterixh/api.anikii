@@ -2,6 +2,8 @@ import httpx
 from bs4 import BeautifulSoup
 from typing import List, Dict
 
+from app.helpers.gogo_episodes import scrape_gogo_episode_list, get_highest_episode
+
 # Define the types for the result (similar to your StreamInfo and StreamLink in TypeScript)
 class StreamLink:
     def __init__(self, name: str, url: str):
@@ -32,22 +34,28 @@ async def parse_streaming_info(url: str) -> StreamInfo:
         if name and url_el:
             stream_links.append(StreamLink(name, url_el.get('data-video')))
     
-    # Extract the maximum episode number
-    max_ep_available = soup.select_one('ul#episode_page')
+    # Extract the maximum episode number from the page
+    # Fallback to the new scraper for more accurate results if needed
+    scraped_episodes = await scrape_gogo_episode_list(url)
+    max_episode = get_highest_episode(scraped_episodes)
     
-    max_episode = 0
-    if max_ep_available:
-        max_episode = max_ep_available.select('li')[-1].find('a').get('ep_end')
+    if max_episode == 0:
+        max_ep_available = soup.select_one('ul#episode_page')
+        if max_ep_available:
+            try:
+                max_episode = int(max_ep_available.select('li')[-1].find('a').get('ep_end', 0))
+            except (ValueError, TypeError, AttributeError):
+                max_episode = 0
     
     # Extract anime information
     anime_info = {
-        'title': soup.select_one('div.anime-info a[title]').text.strip(),  # Extract the anime title
-        'category': soup.select_one('div.anime_video_body_cate a[title]').text.strip(),  # Extract the category
+        'title': soup.select_one('div.anime-info a[title]').text.strip() if soup.select_one('div.anime-info a[title]') else "Unknown",  # Extract the anime title
+        'category': soup.select_one('div.anime_video_body_cate a[title]').text.strip() if soup.select_one('div.anime_video_body_cate a[title]') else "TV",  # Extract the category
         "episodes": max_episode
     }
     # Extract episode information
     episode_info = {
-        'title': soup.select_one('.anime_video_body h1').text.split("at gogoanime")[0].strip()  # Clean episode title
+        'title': soup.select_one('.anime_video_body h1').text.split("at gogoanime")[0].strip() if soup.select_one('.anime_video_body h1') else "Episode"  # Clean episode title
     }
 
     # Return the result as a StreamInfo object

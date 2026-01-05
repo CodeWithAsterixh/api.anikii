@@ -8,6 +8,7 @@ from app.services.anilist_media_service import (
     fetch_trailers
 )
 from app.services.stream_metadata_service import get_anime_episodes
+from app.helpers.gogo_episodes import get_highest_episode
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
 from app.structure.anime_details import structureAnilistDetails
 from app.helpers.response_envelope import success_response, error_response
@@ -27,7 +28,7 @@ async def get_anime_info(request: Request, id: int = Path(..., ge=1)) -> Dict[st
         
         # Scrape total episodes from GogoAnime
         gogo_episodes = await get_anime_episodes(id)
-        total_episodes = len(gogo_episodes) if gogo_episodes else data.get("episodes", 0)
+        total_episodes = get_highest_episode(gogo_episodes) if gogo_episodes else data.get("episodes", 0)
         
         detailsData = structureAnilistDetails({"data": data, "idSub": idSub})
         

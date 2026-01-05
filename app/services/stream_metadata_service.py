@@ -3,7 +3,7 @@ from app.queries.query_manager import query_manager
 from app.helpers.fetchHelpers import make_api_request_async
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
 from app.helpers.getEpM3u8BasedGogo import get_episode, BASE_URLS
-from app.helpers.gogo_episodes import scrape_gogo_episode_list
+from app.helpers.gogo_episodes import scrape_gogo_episode_list, get_highest_episode
 
 async def get_stream_data(id: int) -> Dict[str, Any]:
     """Fetch raw stream metadata from AniList."""
@@ -41,7 +41,7 @@ async def get_episode_extra(id: int, ep: int) -> Dict[str, Any]:
     
     # Also fetch the full list of episodes
     episodes_list = await get_anime_episodes(id)
-    total_episodes = len(episodes_list) if episodes_list else data.get("episodes")
+    total_episodes = get_highest_episode(episodes_list) if episodes_list else data.get("episodes")
     
     return {
         "episodesSub": episode_sub,

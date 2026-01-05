@@ -81,3 +81,26 @@ async def scrape_gogo_episode_list(url: str) -> List[Dict]:
         })
         
     return episodes
+
+def get_highest_episode(episodes: List[Dict]) -> int:
+    """
+    Extracts the highest episode number from a list of scraped episodes.
+    """
+    if not episodes:
+        return 0
+    
+    highest = 0
+    for ep in episodes:
+        try:
+            num_str = str(ep.get("number", "0")).strip()
+            # Handle ranges or non-numeric if necessary, but usually it's a number
+            if "-" in num_str:
+                num = int(num_str.split("-")[-1])
+            else:
+                num = int(float(num_str))
+            if num > highest:
+                highest = num
+        except (ValueError, TypeError):
+            continue
+            
+    return highest

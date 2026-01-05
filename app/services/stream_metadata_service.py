@@ -83,14 +83,23 @@ async def get_anime_episodes(id: int) -> List[Dict[str, Any]]:
 
     for base_url in all_domains:
         # Construct URL for episode 1 (or any episode) to get the list container
-        if "www14.gogoanimes.fi" in base_url:
-            formatted_id = f"{gogoId}-episode-1"
+        # Use gogoId as is, the slug is already correct
+        url = urljoin(base_url, gogoId)
+        
+        # If the URL doesn't end with a slash, add it if it's a "watch" domain
+        if "gogoanimez.cc/watch/" in base_url and not url.endswith("/"):
+             url += "/"
+             
+        # For domains like gogoanimez.cc/watch/, they might need an episode suffix to show the list
+        if "gogoanimez.cc/watch/" in base_url:
+            # Try both the base anime URL and episode 1 URL
+            urls_to_try = [url, f"{url.rstrip('/')}-episode-1"]
         else:
-            formatted_id = f"{gogoId}-episode-1"
-            
-        url = urljoin(base_url, formatted_id)
-        episodes = await scrape_gogo_episode_list(url)
-        if episodes:
-            return episodes
+            urls_to_try = [f"{base_url.rstrip('/')}/{gogoId}-episode-1"]
+
+        for target_url in urls_to_try:
+            episodes = await scrape_gogo_episode_list(target_url)
+            if episodes:
+                return episodes
             
     return []

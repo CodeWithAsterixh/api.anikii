@@ -6,6 +6,7 @@ from app.helpers.scrapers.m3u8Fetch import get_m3u8  # Ensure this is async
 
 # Constants
 BASE_URLS = [
+    "https://gogoanimez.cc/watch/",
     "https://www14.gogoanimes.fi/",
     "https://gogoanime.co.at/",
     "https://anitaku.bz/",
@@ -35,6 +36,7 @@ async def get_episode(id: str, ep: str) -> Optional[Dict]:
         try:
             # Adjust the `id` based on the base_url
             if "www14.gogoanimes.fi" in base_url:
+                print(id)
                 # If base URL is www14.gogoanimes.fi, use the slug as provided
                 # The id passed here is already a slug from romaji title (from fetch_malsyn_data_and_get_provider)
                 formatted_id = f"{id}-episode-{ep}"
@@ -75,14 +77,49 @@ async def get_episode(id: str, ep: str) -> Optional[Dict]:
             iframe_url = iframe_elem.get("src") if iframe_elem and "src" in iframe_elem.attrs else None
 
             # Scrape server list
-            server_list = soup.select("div.anime_muti_link ul li")
             servers = {}
+            # Support multiple selectors for different GogoAnime versions
+            # gogoanimes.fi uses 'div.anime_muti_link ul li'
+            # gogoanimez.cc uses 'ul.muti_link li'
+            server_list = soup.select("div.anime_muti_link ul li, ul.muti_link li")
+
             if server_list:
                 for server in server_list:
-                    server_class = server.get("class", [])
-                    if "anime" not in server_class and server.find("a"):
-                        servers[server_class[0]] = server.find("a").get("data-video")
-            else:
+                    anchor = server.find("a")
+                    if anchor and anchor.has_attr("data-video"):
+                        video_url = anchor["data-video"]
+                        if video_url.startswith("//"):
+                            video_url = f"https:{video_url}"
+
+                        # Extract server name from the anchor text
+                        server_name = ""
+                        for content in anchor.contents:
+                            if isinstance(content, str):
+                                text = content.strip()
+                                if text:
+                                    server_name = text
+                                    break
+                        
+                        if not server_name:
+                            # Fallback: get text but exclude span content
+                            # Create a copy to not modify the original soup if needed, 
+                            # but here we can just iterate children
+                            for child in anchor.children:
+                                if hasattr(child, 'name') and child.name not in ["span", "i"]:
+                                    text = child.get_text(strip=True)
+                                    if text:
+                                        server_name = text
+                                        break
+                        
+                        if not server_name:
+                            # Last resort fallback to first class or "server"
+                            server_classes = server.get("class", [])
+                            server_name = server_classes[0] if server_classes and server_classes[0] != "anime" else "Unknown"
+
+                        servers[server_name] = video_url
+            
+            if not servers:
+                print(f"No servers found for {link}")
                 continue
             # Get M3U8 stream using iframe URL
             m3u8 = None

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Path, Query, Request, HTTPException
 from typing import Any, Dict, Optional
-from app.services.stream_metadata_service import get_stream_data, get_episode_extra
+from app.services.stream_metadata_service import get_stream_data, get_episode_extra, get_anime_episodes
 from app.services.stream_resolver_service import get_episode_stream, get_episode_dub, get_external_stream
 from app.helpers.response_envelope import success_response, error_response
 from app.core.config import get_settings
@@ -64,6 +64,19 @@ async def get_episode_extra_info(
         return success_response(request, data=result, meta=result.get("meta"))
     except Exception as e:
         return error_response(request, status_code=500, message="Failed to fetch extra info", error=str(e))
+
+@router.get("/{id}/episodes")
+@limiter.limit(settings.DEFAULT_RATE_LIMIT)
+async def get_anime_episodes_list(
+    request: Request,
+    id: int = Path(..., ge=1)
+) -> Dict[str, Any]:
+    """Fetch the list of episodes for an anime."""
+    try:
+        data = await get_anime_episodes(id)
+        return success_response(request, data=data)
+    except Exception as e:
+        return error_response(request, status_code=500, message="Failed to fetch episodes list", error=str(e))
 
 @router.get("/{id}/stream/external")
 @limiter.limit(settings.DEFAULT_RATE_LIMIT)

@@ -33,6 +33,7 @@ async def home(request: Request):
         {"endpoint": "/anime/{id}/characters", "description": "Fetch characters of a specific anime. Includes a page query (?page=number)."},
         {"endpoint": "/anime/{id}/trailers", "description": "Fetch trailers of a specific anime."},
         {"endpoint": "/anime/{id}/recommended", "description": "Fetch recommended anime based on the anime ID. Includes a page query (?page=number)."},
+        {"endpoint": "/anime/{id}/episodes", "description": "Fetch full list of episodes for a specific anime."},
         {"endpoint": "/anime/{id}/stream", "description": "Fetch streaming info for a specific anime."},
         {"endpoint": "/anime/{id}/stream/{ep}", "description": "Fetch streaming episode sub links for a specific anime."},
         {"endpoint": "/anime/{id}/stream/{ep}?type=dub", "description": "Fetch streaming episode dub links for a specific anime."},

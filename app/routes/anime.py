@@ -7,6 +7,7 @@ from app.services.anilist_media_service import (
     fetch_recommended,
     fetch_trailers
 )
+from app.services.stream_metadata_service import get_anime_episodes
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
 from app.structure.anime_details import structureAnilistDetails
 from app.helpers.response_envelope import success_response, error_response
@@ -23,7 +24,16 @@ async def get_anime_info(request: Request, id: int = Path(..., ge=1)) -> Dict[st
     try:
         data = await fetch_anime_details(id)
         idSub = await fetch_malsyn_data_and_get_provider(data["id"])
+        
+        # Scrape total episodes from GogoAnime
+        gogo_episodes = await get_anime_episodes(id)
+        total_episodes = len(gogo_episodes) if gogo_episodes else data.get("episodes", 0)
+        
         detailsData = structureAnilistDetails({"data": data, "idSub": idSub})
+        
+        # Replace the current episode value (total length)
+        detailsData["episodes"] = total_episodes
+        
         return success_response(request, data=detailsData)
     except Exception as e:
         return error_response(request, status_code=500, message="Failed to fetch anime details", error=str(e))

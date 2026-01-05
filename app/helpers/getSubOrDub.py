@@ -48,7 +48,7 @@ async def get_episode_data(id: int, ep: int, type: str = "sub"):
             
             # Get extra servers info from gogo
             episode_extra = await get_episode(gogoId, ep)
-            vidcdn_url = episode_extra.get("servers",{}).get("vidcdn",None)
+            extra_servers = episode_extra.get("servers", {}) if episode_extra else {}
 
             # Post-process parsed links:
             # - remove any with null/empty url
@@ -72,24 +72,28 @@ async def get_episode_data(id: int, ep: int, type: str = "sub"):
                 # Ensure protocol prefix for protocol-relative URLs
                 if isinstance(url_val, str) and url_val.startswith("//"):
                     url_val = "https:" + url_val
-                # Disable specific gogoanime hd-1/hd-2 player links
+                # Disable specific gogoanime hd-1/hd-2 player links and s3taku links
                 if (
                     name_val == "anime"
                     and isinstance(url_val, str)
-                    and "gogoanime.me.uk/newplayer.php" in url_val
-                    and ("type=hd-1" in url_val or "type=hd-2" in url_val)
+                    and (
+                        ("gogoanime.me.uk/newplayer.php" in url_val and ("type=hd-1" in url_val or "type=hd-2" in url_val))
+                        or "s3taku.com/streaming.php" in url_val
+                    )
                 ):
                     continue
                 processed_links.append({"name": name_val, "url": url_val})
             
             # Build final stream_links list
-            stream_links = [
-                *processed_links,
-            ]
-            if vidcdn_url:
-                stream_links.append({"name":"vidcdn", "url": vidcdn_url})
-            if nineanime_url:
-                stream_links.append({"name":"9anime", "url": nineanime_url})
+            # Use a dictionary to avoid duplicates by URL
+            final_links_dict = {link["url"]: link for link in processed_links}
+            
+            # Add extra servers from get_episode (handles new gogo structures)
+            for s_name, s_url in extra_servers.items():
+                if s_url not in final_links_dict:
+                    final_links_dict[s_url] = {"name": s_name, "url": s_url}
+            
+            stream_links = list(final_links_dict.values())
             
             return {
                 "anime_info":data.anime_info,

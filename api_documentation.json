@@ -120,6 +120,21 @@
         "performance": ["moderate"]
       },
       {
+        "path": "/anime/{id}/episodes",
+        "method": "GET",
+        "description": "Fetch the full list of episodes for a specific anime from GogoAnime",
+        "query": {},
+        "params": {"id": {"type": "number"}},
+        "body": null,
+        "exampleRequest": {"method": "GET", "url": "/anime/1/episodes"},
+        "exampleResponse": {"status": {"code": 200, "success": true, "message": "OK"}, "data": [{"number": "1", "url": "...", "category": "SUB", "title": "..."}]},
+        "responseSchema": {"data": "EpisodeListItem[]"},
+        "pagination": null,
+        "auth": null,
+        "failures": ["Anime not found", "Scraping failure"],
+        "performance": ["network-bound"]
+      },
+      {
         "path": "/anime/{id}/stream",
         "method": "GET",
         "description": "Fetch streaming metadata from AniList",

@@ -47,4 +47,4 @@ async def get_popular_releases_seasons(page: int, season: Optional[str] = None, 
     return await fetch_paged_media("releases", "get_releases", cache_key, page, variables)
 
 async def get_popular_upcoming(page: int):
-    return await fetch_paged_media("upcoming", "get_upcoming_media", "popular_upcoming", page)
+    return await fetch_paged_media("upcoming", "get_upcoming", "popular_upcoming", page)

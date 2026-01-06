@@ -17,14 +17,14 @@ async def verify_api_key(x_api_key: str = Header(None)):
         raise HTTPException(status_code=403, detail="Invalid API Key")
     return x_api_key
 
-def validate_safe_path(filename: str, base_dir: str = BASE_TMP_DIR) -> str:
-    """Validate and return a safe path, preventing path traversal."""
-    # Normalize path
-    safe_path = os.path.normpath(os.path.join(base_dir, filename))
-    # Check if the normalized path starts with the base directory
-    if not safe_path.startswith(os.path.abspath(base_dir)):
-        raise HTTPException(status_code=400, detail="Invalid path or filename")
-    return safe_path
+def validate_safe_path(path: str, base_dir: str):
+    base = Path(base_dir).resolve()
+    target = (base / path).resolve()
+
+    if not str(target).startswith(str(base)):
+        raise ValueError("Unsafe path")
+
+    return str(target)
 
 def is_safe_url(url: str) -> bool:
     """

@@ -7,6 +7,7 @@ from app.core.logger import logger
 
 BASE_TMP_DIR = os.path.join(tempfile.gettempdir(), "anikii")
 
+
 def clear_anikii_route(directory: str | None = None, prefix: str = "", filename_td: str = ""):
     """
     Deletes all files and folders in the given directory that start with the given prefix.
@@ -29,7 +30,7 @@ def clear_anikii_route(directory: str | None = None, prefix: str = "", filename_
 
     for filename in os.listdir(directory):
         if filename.startswith(prefix):  # Check if filename starts with prefix
-            file_path = os.path.join(directory, filename)
+            file_path = validate_safe_path(filename, directory)
             try:
                 # Remove files and symbolic links
                 if os.path.isfile(file_path) or os.path.islink(file_path):
@@ -57,7 +58,7 @@ def delete_specific_file(filename: str = "", directory: str | None = None):
         return False
 
     try:
-        os.unlink(file_path)  # Remove the file
+        file_path.unlink(file_path)  # Remove the file
         return True
     except Exception:
         return False

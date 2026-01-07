@@ -13,7 +13,7 @@ async def fetch_paged_media(
     variables: Optional[Dict[str, Any]] = None
 ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     """Generic helper to fetch paged media with caching."""
-    cached = runCacheData(page, cache_key)
+    cached = await runCacheData(page, cache_key)
     if cached:
         return cached.get("pageInfo", {}), cached.get("data", [])
 
@@ -30,7 +30,7 @@ async def fetch_paged_media(
     media = response["data"]["Page"]["media"]
     pageInfo = response["data"]["Page"]["pageInfo"]
     
-    saveCacheData(pageInfo, media, cache_key, page)
+    await saveCacheData(pageInfo, media, cache_key, page)
     return pageInfo, media
 
 async def get_popular(page: int):

@@ -1,19 +1,23 @@
 from fastapi import APIRouter, Request
 from app.helpers.timeFunction import available_seasons,get_years
 from app.helpers.response_envelope import success_response
+from app.core.config import get_settings
 import json
+import aiofiles
 from pathlib import Path
 
 
 router = APIRouter()
+settings = get_settings()
 
 @router.get("/")
 async def home(request: Request):
     # Resolve path to api_documentation.json relative to project root
     try:
         doc_path = Path(__file__).resolve().parents[2] / "api_documentation.json"
-        with open(doc_path, "r", encoding="utf-8-sig") as f:
-            documentation = json.load(f)
+        async with aiofiles.open(doc_path, mode="r", encoding="utf-8-sig") as f:
+            content = await f.read()
+            documentation = json.loads(content)
         return success_response(request, data=documentation)
     except Exception:
         # Message array split by periods
@@ -57,8 +61,8 @@ async def home(request: Request):
             {"endpoint": "/anime/{id}/stream/ep/{ep}/extra", "description": "Fetch extra streaming episode for a specific anime. Includes page query (?page=number)."}
         ]
         
-        # Live URL
-        live_url = "https://api-anikii.onrender.com/"
+        # Live URL from settings
+        live_url = settings.LIVE_URL
         
         # Safe fallback data
         data = {

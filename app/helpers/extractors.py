@@ -2,13 +2,9 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 import base64
 import json
+from app.core.config import get_settings
 
-# Keys and Initialization Vector (IV) for encryption and decryption
-KEYS = {
-    "key": b'37911490979715163134003223491201',
-    "second_key": b'54674138327930866480207815084989',
-    "iv": b'3134003223491201',
-}
+settings = get_settings()
 
 def encrypt_aes(data: str, key: bytes, iv: bytes) -> str:
     """
@@ -59,10 +55,10 @@ def generate_encrypt_ajax_parameters(script_data: str, video_id: str) -> str:
         str: Formatted parameters for the `encrypt-ajax.php` request.
     """
     # Encrypt the video ID
-    encrypted_key = encrypt_aes(video_id, KEYS['key'], KEYS['iv'])
+    encrypted_key = encrypt_aes(video_id, settings.AES_KEY, settings.AES_IV)
 
     # Decrypt the embedded token
-    token = decrypt_aes(script_data, KEYS['key'], KEYS['iv'])
+    token = decrypt_aes(script_data, settings.AES_KEY, settings.AES_IV)
 
     # Generate and return the parameters string
     return f"id={encrypted_key}&alias={video_id}&{token}"
@@ -82,7 +78,7 @@ def decrypt_encrypt_ajax_response(response_data: dict) -> dict:
         raise ValueError("Response data does not contain 'data' key.")
 
     # Decrypt the encrypted data
-    decrypted_str = decrypt_aes(encrypted_data, KEYS['second_key'], KEYS['iv'])
+    decrypted_str = decrypt_aes(encrypted_data, settings.AES_SECOND_KEY, settings.AES_IV)
 
     # Parse and return as a dictionary
     return json.loads(decrypted_str)

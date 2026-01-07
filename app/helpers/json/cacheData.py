@@ -11,7 +11,7 @@ from app.core.logger import logger
 
 settings = get_settings()
 
-def runCacheData(page: Optional[int], filePath: str, ttl: Optional[int] = None) -> Optional[Union[Dict[str, Any], List[Any]]]:
+async def runCacheData(page: Optional[int], filePath: str, ttl: Optional[int] = None) -> Optional[Union[Dict[str, Any], List[Any]]]:
     """
     Return cached data if available and not expired.
     - If page is None, returns the entire cached object (e.g., dict for paginated caches or list for collections) or None.
@@ -20,7 +20,7 @@ def runCacheData(page: Optional[int], filePath: str, ttl: Optional[int] = None) 
     """
     # Use global default TTL if not specified
     load_ttl = ttl if ttl is not None else settings.CACHE_TTL
-    loadData = jsonLoad(filePath, ttl=load_ttl)
+    loadData = await jsonLoad(filePath, ttl=load_ttl)
 
     # If no specific page requested, return whatever is cached (may be dict or list)
     if page is None:
@@ -43,7 +43,7 @@ def runCacheData(page: Optional[int], filePath: str, ttl: Optional[int] = None) 
     return None
 
 
-def saveCacheData(pageInfo: Dict[str, Any], media: List[Dict[str, Any]], filePath: str, page: int) -> Dict[str, Any]:
+async def saveCacheData(pageInfo: Dict[str, Any], media: List[Dict[str, Any]], filePath: str, page: int) -> Dict[str, Any]:
     """
     Save the cache data for a given file and page.
     Returns the structured cached response dict with pageInfo and data.
@@ -60,16 +60,16 @@ def saveCacheData(pageInfo: Dict[str, Any], media: List[Dict[str, Any]], filePat
     # Persist to DB if present (lazy import to avoid test-time DB dependency)
     try:
         from app.database.addFile import findFileByName, updateInDb  # type: ignore
-        findDb = findFileByName(f"{filePath}.json")
+        findDb = await findFileByName(f"{filePath}.json")
         if findDb:
-            updateInDb(f"{filePath}.json", {"$set": {f"data.pages.{page}": structuredData}})
+            await updateInDb(f"{filePath}.json", {"$set": {f"data.pages.{page}": structuredData}})
             logger.info(f"Updated database cache for {filePath}.json")
     except Exception as e:
         # Skip DB persistence if unavailable
         logger.warning(f"Skipped database cache update for {filePath}: {e}")
 
     # Persist to JSON file
-    jsonSave(filePath, page, {"lastPage": lastPage, "data": structuredData})
+    await jsonSave(filePath, page, {"lastPage": lastPage, "data": structuredData})
     return {
         "pageInfo": pageInfo_out,
         "data": structuredData,

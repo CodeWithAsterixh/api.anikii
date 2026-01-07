@@ -1,6 +1,7 @@
 import os
 import json
 import tempfile
+import aiofiles
 from app.helpers.security import validate_safe_path
 from app.helpers.json.json_loader import jsonLoad
 
@@ -9,7 +10,7 @@ from app.core.logger import logger
 # Use a cross-platform temp directory
 BASE_TMP_DIR = os.path.join(tempfile.gettempdir(), "anikii")
 
-def jsonSave(fileName: str, page: int, new_items: dict) -> dict:
+async def jsonSave(fileName: str, page: int, new_items: dict) -> dict:
     """
     Loads existing JSON data, adds new items to the specified page, and saves the updated data.
     """
@@ -20,9 +21,12 @@ def jsonSave(fileName: str, page: int, new_items: dict) -> dict:
     logger.debug(f"Saving data to {json_path}")
 
     # Load existing data if available
-    existing_data = jsonLoad(fileName)
+    existing_data = await jsonLoad(fileName)
 
     # Ensure a structured dictionary
+    if not isinstance(existing_data, dict):
+        existing_data = {}
+        
     data = {
         "lastPage": new_items.get("lastPage", existing_data.get("lastPage", 1)),
         "pages": existing_data.get("pages", {})
@@ -43,15 +47,15 @@ def jsonSave(fileName: str, page: int, new_items: dict) -> dict:
 
     # Save the updated data
     try:
-        with open(json_path, "w", encoding="utf-8") as file:
-            json.dump(data, file, indent=4)
+        async with aiofiles.open(json_path, "w", encoding="utf-8") as file:
+            await file.write(json.dumps(data, indent=4))
         logger.info(f"Updated cache for {fileName} (page {page})")
         return data
     except Exception as e:
         logger.error(f"Error writing to JSON file {json_path}: {e}")
         return existing_data
 
-def jsonWrite(fileName: str, content):
+async def jsonWrite(fileName: str, content):
     """
     Loads existing JSON data, and saves the content to the specified file.
     """
@@ -63,11 +67,11 @@ def jsonWrite(fileName: str, content):
 
     # Save the updated data
     try:
-        with open(json_path, "w", encoding="utf-8") as file:
-            json.dump(content, file, indent=4)
+        async with aiofiles.open(json_path, "w", encoding="utf-8") as file:
+            await file.write(json.dumps(content, indent=4))
         logger.info(f"Saved JSON content to {fileName}")
         return content
     except Exception as e:
         logger.error(f"Error writing to JSON file {json_path}: {e}")
         # Return existing data if write fails
-        return jsonLoad(fileName)
+        return await jsonLoad(fileName)

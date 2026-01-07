@@ -2,6 +2,7 @@ import os
 import json
 import tempfile
 import time
+import aiofiles
 from typing import Optional
 from app.helpers.security import validate_safe_path
 
@@ -10,7 +11,7 @@ from app.core.logger import logger
 # Use a cross-platform temp directory
 BASE_TMP_DIR = os.path.join(tempfile.gettempdir(), "anikii")
 
-def jsonLoad(fileName: str, ttl: Optional[int] = None) -> dict:
+async def jsonLoad(fileName: str, ttl: Optional[int] = None) -> dict:
     """
     Loads data from a JSON file if it exists and is not expired; otherwise, returns an empty dictionary.
     
@@ -28,14 +29,15 @@ def jsonLoad(fileName: str, ttl: Optional[int] = None) -> dict:
                 logger.info(f"Cache expired for {fileName} (mtime: {time.ctime(mtime)}, TTL: {ttl}s)")
                 return {}
         try:
-            with open(json_path, "r", encoding="utf-8-sig") as file:
-                return json.load(file)
+            async with aiofiles.open(json_path, mode="r", encoding="utf-8-sig") as file:
+                content = await file.read()
+                return json.loads(content)
         except (json.JSONDecodeError, UnicodeDecodeError):
             logger.error(f"JSON file {json_path} is corrupted or has invalid encoding. Returning empty data.")
             return {}
     return {}
 
-def jsonLoadMeta(fileName: str) -> dict:
+async def jsonLoadMeta(fileName: str) -> dict:
     """
     Loads meta data from a JSON file if it exists; otherwise, returns an empty dictionary.
     """

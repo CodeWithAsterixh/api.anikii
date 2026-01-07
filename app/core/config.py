@@ -41,6 +41,15 @@ class Settings:
         self.CACHE_TTL: int = int(os.getenv("CACHE_TTL", "3600"))
         # Debug mode (disable in production)
         self.DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
+        # AES Keys and IV for encryption/decryption
+        self.AES_KEY: bytes = os.getenv("AES_KEY", "37911490979715163134003223491201").encode()
+        self.AES_SECOND_KEY: bytes = os.getenv("AES_SECOND_KEY", "54674138327930866480207815084989").encode()
+        self.AES_IV: bytes = os.getenv("AES_IV", "3134003223491201").encode()
+        # External API URLs
+        self.LIVE_URL: str = os.getenv("LIVE_URL", "https://api-anikii.onrender.com/")
+        self.BASE_URL_ANILIST: str = os.getenv("BASE_URL_ANILIST", "https://graphql.anilist.co")
+        self.BASE_URL_GOGO: str = os.getenv("BASE_URL_GOGO", "https://gogoanime3.co")
+        self.BASE_URL_HIANIME: str = os.getenv("BASE_URL_HIANIME", "https://hianime.to/")
 
 
 _settings: Optional[Settings] = None

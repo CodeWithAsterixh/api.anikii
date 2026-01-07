@@ -1,6 +1,8 @@
 import httpx
 from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
+from app.helpers.fetchHelpers import get_async_client
+from app.core.logger import logger
 
 async def scrape_gogo_episode_list(url: str, soup: Optional[BeautifulSoup] = None) -> List[Dict]:
     """
@@ -13,15 +15,15 @@ async def scrape_gogo_episode_list(url: str, soup: Optional[BeautifulSoup] = Non
         }
         
         try:
-            async with httpx.AsyncClient(follow_redirects=True) as client:
-                response = await client.get(url, headers=headers)
-                if response.status_code != 200:
-                    print(f"Failed to fetch {url}: {response.status_code}")
-                    return []
-                html = response.text
-                soup = BeautifulSoup(html, "html.parser")
+            client = await get_async_client()
+            response = await client.get(url, headers=headers)
+            if response.status_code != 200:
+                logger.warning(f"Failed to fetch {url}: {response.status_code}")
+                return []
+            html = response.text
+            soup = BeautifulSoup(html, "html.parser")
         except Exception as e:
-            print(f"Error fetching {url}: {e}")
+            logger.error(f"Error fetching {url}: {e}")
             return []
 
     episodes = []
@@ -93,12 +95,12 @@ async def get_max_episodes_from_gogo(url: str, soup: Optional[BeautifulSoup] = N
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
         }
         try:
-            async with httpx.AsyncClient(follow_redirects=True) as client:
-                response = await client.get(url, headers=headers)
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.text, "html.parser")
+            client = await get_async_client()
+            response = await client.get(url, headers=headers)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, "html.parser")
         except Exception as e:
-            print(f"Error fetching {url} for max episodes: {e}")
+            logger.error(f"Error fetching {url} for max episodes: {e}")
 
     max_episode = 0
 
@@ -124,7 +126,7 @@ async def get_max_episodes_from_gogo(url: str, soup: Optional[BeautifulSoup] = N
                             elif val.isdigit():
                                 max_episode = int(val)
             except (ValueError, TypeError, AttributeError, IndexError) as e:
-                print(f"Error parsing episode_page: {e}")
+                logger.warning(f"Error parsing episode_page: {e}")
                 max_episode = 0
 
     # 2. Fallback to scraping the episode list if pagination wasn't helpful

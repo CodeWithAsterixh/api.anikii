@@ -7,17 +7,17 @@ from app.queries.query_manager import query_manager
 
 async def get_genres_list() -> List[str]:
     """Fetch the list of all available genres."""
-    cacheDataAvailable = runCacheData(None, "genres")
+    cacheDataAvailable = await runCacheData(None, "genres")
     if cacheDataAvailable is not None:
         return cacheDataAvailable
     
     collection = await fetch_genres()
-    data = jsonWrite("genres", collection)
+    data = await jsonWrite("genres", collection)
     return data
 
 async def get_genre_items(genre: str, page: int = 1) -> Dict[str, Any]:
     """Fetch media items for a specific genre with pagination."""
-    cacheDataAvailable = runCacheData(page, f"genres_{genre}")
+    cacheDataAvailable = await runCacheData(page, f"genres_{genre}")
     if cacheDataAvailable:
         return {
             "data": cacheDataAvailable.get("data"),
@@ -35,7 +35,7 @@ async def get_genre_items(genre: str, page: int = 1) -> Dict[str, Any]:
     pageInfo = response["data"]["Page"]["pageInfo"]
     media = response["data"]["Page"]["media"]
     
-    saveCacheData(pageInfo, media, f"genres_{genre}", page)
+    await saveCacheData(pageInfo, media, f"genres_{genre}", page)
     
     return {
         "data": media,

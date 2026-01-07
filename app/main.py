@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException # type: ignore
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -21,6 +22,7 @@ from app.routes import (
 )
 from app.core.config import get_settings
 from app.helpers.fetchHelpers import close_async_client, _get_async_client
+from app.database.get import get_database, close_database
 
 
 
@@ -30,8 +32,18 @@ from app.helpers.response_envelope import success_response
 # load environment
 load_dotenv()
 
-# Initialize FastAPI app
-app = FastAPI(default_response_class=ORJSONResponse)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Initialize shared AsyncClient and Database
+    await _get_async_client()
+    get_database() # Ensure DB client is initialized
+    yield
+    # Shutdown: Gracefully close shared AsyncClient and Database
+    await close_async_client()
+    close_database()
+
+# Initialize FastAPI app with lifespan
+app = FastAPI(default_response_class=ORJSONResponse, lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -85,13 +97,3 @@ for route in routes:
 @app.get("/health")
 def health_check(request: Request):
     return success_response(request, data={"status": "API is up and running! go to /popular"})
-
-@app.on_event("startup")
-async def startup_event():
-    # Initialize shared AsyncClient(s) for outbound HTTP
-    await _get_async_client()
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    # Gracefully close shared AsyncClient(s)
-    await close_async_client()

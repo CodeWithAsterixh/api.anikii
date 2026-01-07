@@ -1,14 +1,16 @@
 from fastapi import APIRouter, Path, Query, Request, HTTPException
 from typing import Optional
 from urllib.parse import urlparse
+from app.core.constants import TYPE_REGEX
 from app.services.stream_resolver_service import get_episode_stream
 from app.services.stream_proxy_service import stream_video_content
-from app.helpers.scrapers.mp4Up import getVid
+from app.helpers.scrapers.mp4Up import get_vid as getVid
 from app.core.config import get_settings
 from app.core.limiter import limiter
 
 settings = get_settings()
 router = APIRouter(prefix="/anime", tags=["stream-actions"])
+
 
 @router.get("/{id}/stream/ep/{ep}/download")
 @limiter.limit(settings.DEFAULT_RATE_LIMIT)
@@ -16,7 +18,7 @@ async def download_episode(
     request: Request,
     id: int = Path(..., ge=1),
     ep: int = Path(..., ge=1),
-    type: str = Query("sub", regex="^(sub|dub)$")
+    type: str = Query("sub", pattern=TYPE_REGEX)
 ):
     """Proxy download for an episode via mp4upload."""
     episode_data = await get_episode_stream(id, ep, type)
@@ -46,7 +48,7 @@ async def download_direct_stream(
     request: Request,
     id: int = Path(..., ge=1),
     ep: int = Path(..., ge=1),
-    type: str = Query("sub", regex="^(sub|dub)$"),
+    type: str = Query("sub", pattern=TYPE_REGEX),
     provider: Optional[str] = Query(None),
     disable_ssl: bool = Query(False)
 ):
@@ -66,7 +68,7 @@ async def download_direct_stream(
             u = urlparse(direct_link)
             if u.scheme and u.netloc:
                 referer = f"{u.scheme}://{u.netloc}/"
-        except:
+        except Exception:
             pass
         return await stream_video_content(direct_link, referer, title, disable_ssl=disable_ssl)
 
@@ -89,7 +91,7 @@ async def live_stream(
     request: Request,
     id: int = Path(..., ge=1),
     ep: int = Path(..., ge=1),
-    type: str = Query("sub", regex="^(sub|dub)$"),
+    type: str = Query("sub", pattern=TYPE_REGEX),
     provider: Optional[str] = Query(None)
 ):
     """Live streaming endpoint (proxied)."""
@@ -106,8 +108,7 @@ async def live_stream(
         if not video_url:
             raise HTTPException(status_code=404, detail=f"Failed to extract live video source: {mp4_link}")
 
-        return await stream_video_content(video_url, mp4_link, f"live_{id}_{ep}", content_type="video/mp4")
-    except HTTPException as e:
-        return error_response(request, status_code=e.status_code, message=e.detail)
+        title = episode_data.get("episode_info", {}).get("title", f"anime_{id}_ep_{ep}")
+        return await stream_video_content(video_url, mp4_link, title)
     except Exception as e:
-        return error_response(request, status_code=500, message="Live stream failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))

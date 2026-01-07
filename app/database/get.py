@@ -22,6 +22,13 @@ def get_database():
     if _client is None:
         _client = AsyncIOMotorClient(uri, serverSelectionTimeoutMS=5000)
     return _client.get_database(settings.DB_NAME)
+
+def close_database():
+    """Close the MongoDB connection."""
+    global _client
+    if _client:
+        _client.close()
+        _client = None
     
     
 

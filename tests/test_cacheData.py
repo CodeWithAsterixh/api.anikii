@@ -2,7 +2,7 @@ import os
 from typing import Dict, Any, List
 
 from app.helpers.json._cache_data import run_cache_data, save_cache_data
-from app.helpers.json.json_loader import jsonLoad
+from app.helpers.json.json_loader import json_load
 from app.helpers.json.clearTmp import delete_specific_file
 
 
@@ -79,7 +79,7 @@ def test_save_cache_data_persists_and_caps_last_page():
     assert len(saved["data"]) == 1
 
     # Verify file content
-    loaded = jsonLoad(TEST_FILE)
+    loaded = json_load(TEST_FILE)
     assert loaded.get("lastPage") == 50
     assert "pages" in loaded
     assert "2" in loaded["pages"]
@@ -119,7 +119,7 @@ def test_save_cache_data_appends_items_on_same_page():
     assert saved2["page_info"]["currentPage"] == 2
 
     # Verify the page now has 2 items
-    loaded = jsonLoad(TEST_FILE)
+    loaded = json_load(TEST_FILE)
     assert len(loaded["pages"]["2"]) == 2
 
     result = run_cache_data(2, TEST_FILE)

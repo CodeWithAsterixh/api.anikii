@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
-from app.helpers.json.json_loader import jsonLoad
+from app.helpers.json.json_loader import json_load
 from app.helpers.json.json_writer import json_save
 from app.helpers.json.pageLocator import ensure_page_exists
 from app.structure.listItem import structure_anilist_array
@@ -20,7 +20,7 @@ async def run_cache_data(page: Optional[int], file_path: str, ttl: Optional[int]
     """
     # Use global default TTL if not specified
     load_ttl = ttl if ttl is not None else settings.CACHE_TTL
-    load_data = await jsonLoad(file_path, ttl=load_ttl)
+    load_data = await json_load(file_path, ttl=load_ttl)
 
     # If no specific page requested, return whatever is cached (may be dict or list)
     if page is None:

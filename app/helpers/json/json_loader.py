@@ -11,22 +11,22 @@ from app.core.logger import logger
 # Use a cross-platform temp directory
 BASE_TMP_DIR = os.path.join(tempfile.gettempdir(), "anikii")
 
-async def jsonLoad(fileName: str, ttl: Optional[int] = None) -> dict:
+async def json_load(file_name: str, ttl: Optional[int] = None) -> dict:
     """
     Loads data from a JSON file if it exists and is not expired; otherwise, returns an empty dictionary.
     
     Args:
-        fileName: Name of the file to load (without extension)
+        file_name: Name of the file to load (without extension)
         ttl: Optional time-to-live in seconds. If provided, file will be ignored if older than TTL.
     """
-    json_path = validate_safe_path(f"{fileName}.json")
+    json_path = validate_safe_path(f"{file_name}.json")
     logger.debug(f"Loading data from {json_path}")
 
     if os.path.exists(json_path):
         if ttl is not None:
             mtime = os.path.getmtime(json_path)
             if time.time() - mtime > ttl:
-                logger.info(f"Cache expired for {fileName} (mtime: {time.ctime(mtime)}, TTL: {ttl}s)")
+                logger.info(f"Cache expired for {file_name} (mtime: {time.ctime(mtime)}, TTL: {ttl}s)")
                 return {}
         try:
             async with aiofiles.open(json_path, mode="r", encoding="utf-8-sig") as file:
@@ -37,12 +37,12 @@ async def jsonLoad(fileName: str, ttl: Optional[int] = None) -> dict:
             return {}
     return {}
 
-async def jsonLoadMeta(fileName: str) -> dict:
+def json_load_meta(file_name: str) -> dict:
     """
     Loads meta data from a JSON file if it exists; otherwise, returns an empty dictionary.
     """
     import time
-    json_path = validate_safe_path(f"{fileName}.json")
+    json_path = validate_safe_path(f"{file_name}.json")
     logger.debug(f"Loading metadata from {json_path}")
 
     if os.path.exists(json_path):
@@ -64,7 +64,7 @@ async def jsonLoadMeta(fileName: str) -> dict:
                 "creation_time":creation_time,
                 "modification_time":modification_time,
                 "access_time":access_time,
-                "name": f"{fileName}.json",
+                "name": f"{file_name}.json",
                 "type": "json",          
             }
         except Exception as e:

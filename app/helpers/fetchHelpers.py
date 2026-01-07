@@ -38,7 +38,7 @@ async def make_api_request_async(body_obj: dict, max_retries: int = 3, backoff_f
     Uses asyncio.timeout for robust timeout management.
     Returns parsed JSON; raises httpx.HTTPError on network/HTTP errors.
     """
-    client = await get_async_client()
+    client = get_async_client()
     attempt = 0
     statuses = {429, 500, 502, 503, 504}
     last_exc = None

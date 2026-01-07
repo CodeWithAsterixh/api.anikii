@@ -3,7 +3,7 @@ import json
 import tempfile
 import aiofiles
 from app.helpers.security import validate_safe_path
-from app.helpers.json.json_loader import jsonLoad
+from app.helpers.json.json_loader import json_load
 
 from app.core.logger import logger
 
@@ -21,7 +21,7 @@ async def json_save(file_name: str, page: int, new_items: dict) -> dict:
     logger.debug(f"Saving data to {json_path}")
 
     # Load existing data if available
-    existing_data = await jsonLoad(file_name)
+    existing_data = await json_load(file_name)
 
     # Ensure a structured dictionary
     if not isinstance(existing_data, dict):
@@ -74,4 +74,4 @@ async def json_write(file_name: str, content):
     except Exception as e:
         logger.error(f"Error writing to JSON file {json_path}: {e}")
         # Return existing data if write fails
-        return await jsonLoad(file_name)
+        return await json_load(file_name)

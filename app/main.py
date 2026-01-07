@@ -35,7 +35,7 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Initialize shared AsyncClient and Database
-    await _get_async_client()
+    _get_async_client()
     get_database() # Ensure DB client is initialized
     yield
     # Shutdown: Gracefully close shared AsyncClient and Database

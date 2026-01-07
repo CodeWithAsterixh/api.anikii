@@ -17,7 +17,6 @@ from app.routes import (
     fyp,
     anime,
     stream_metadata,
-    stream_actions,
     admin
 )
 from app.core.config import get_settings
@@ -84,7 +83,6 @@ routes = [
     fyp.router,
     anime.router,
     stream_metadata.router,
-    stream_actions.router,
     admin.router,
 ]
 

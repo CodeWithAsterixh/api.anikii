@@ -63,7 +63,7 @@ async def save_custom_data(request: Request, body: SaveFileRequest):
 @router.delete("/storage/clear")
 async def clear_all_storage(
     request: Request, 
-    storage: str = Query(..., regex="^(local|db)$")
+    storage: str = Query(..., pattern="^(local|db)$")
 ):
     """Clear all data from either local temp storage or the database."""
     cleared_items = await clear_storage(storage)

@@ -1,7 +1,8 @@
 import random
 
 
-def structureAnilistItem(data:dict)->dict:
+
+def structure_anilist_item(data:dict)->dict:
         anime_id = data.get('id')
         title_data = data.get('title') or {}
         title = title_data.get('english') or title_data.get('romaji') or 'Unknown Title'
@@ -48,12 +49,12 @@ def structureAnilistItem(data:dict)->dict:
         }
         
         return structured_data
-def structureAnilistArray(data_list: list) -> list:
+def structure_anilist_array(data_list: list) -> list:
     structured_list = []
 
     for data in data_list:
         # Extract necessary fields with fallback/default values
-        structured_data = structureAnilistItem(data)
+        structured_data = structure_anilist_item(data)
 
         # Add structured object to the list
         structured_list.append(structured_data)

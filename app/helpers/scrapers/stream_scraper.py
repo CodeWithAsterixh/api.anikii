@@ -23,11 +23,11 @@ async def extract_vidcloud(url):
         return {"sources": [], "subtitles": []}
         
     host = "https://megacloud.tv"
-    id = url.split("/")[-1].split("?")[0]
+    video_id = url.split("/")[-1].split("?")[0]
 
     client = await get_async_client()
     # Fetch sources
-    response = await client.get(f"{host}/embed-2/ajax/e-1/getSources?id={id}", headers={"X-Requested-With": "XMLHttpRequest"})
+    response = await client.get(f"{host}/embed-2/ajax/e-1/getSources?id={video_id}", headers={"X-Requested-With": "XMLHttpRequest"})
     req_data = response.json()
     sources = req_data.get("sources")
     tracks = req_data.get("tracks", [])

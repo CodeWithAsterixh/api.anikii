@@ -10,7 +10,7 @@ settings = get_settings()
 # Async HTTP client (module-level) for connection reuse
 _async_client: Optional[httpx.AsyncClient] = None
 
-async def _get_async_client() -> httpx.AsyncClient:
+def _get_async_client() -> httpx.AsyncClient:
     global _async_client
     if _async_client is None:
         timeout = httpx.Timeout(connect=5.0, read=10.0, write=10.0, pool=5.0)
@@ -27,14 +27,15 @@ async def _get_async_client() -> httpx.AsyncClient:
         )
     return _async_client
 
-async def get_async_client() -> httpx.AsyncClient:
+def get_async_client() -> httpx.AsyncClient:
     """Public helper to get the shared client."""
-    return await _get_async_client()
+    return _get_async_client()
 
-async def make_api_request_async(body_obj: dict, timeout: float = 10.0, max_retries: int = 3, backoff_factor: float = 0.3) -> dict:
+async def make_api_request_async(body_obj: dict, max_retries: int = 3, backoff_factor: float = 0.3) -> dict:
     """
     Async POST to Anilist GraphQL using httpx.AsyncClient with connection pooling.
     Implements retry with exponential backoff and jitter for transient errors (429/5xx).
+    Uses asyncio.timeout for robust timeout management.
     Returns parsed JSON; raises httpx.HTTPError on network/HTTP errors.
     """
     client = await get_async_client()
@@ -44,7 +45,9 @@ async def make_api_request_async(body_obj: dict, timeout: float = 10.0, max_retr
     
     while attempt <= max_retries:
         try:
-            resp = await client.post(settings.BASE_URL_ANILIST, json=body_obj, timeout=timeout)
+            async with asyncio.timeout(10.0):
+                resp = await client.post(settings.BASE_URL_ANILIST, json=body_obj)
+            
             if resp.status_code in statuses and attempt < max_retries:
                 delay = backoff_factor * (2 ** attempt) + random.uniform(0, 0.1)
                 await asyncio.sleep(delay)

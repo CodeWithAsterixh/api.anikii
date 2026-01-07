@@ -1,12 +1,12 @@
 import os
 from typing import Dict, Any, List
 
-from app.helpers.json.cacheData import runCacheData, saveCacheData
+from app.helpers.json._cache_data import run_cache_data, save_cache_data
 from app.helpers.json.json_loader import jsonLoad
 from app.helpers.json.clearTmp import delete_specific_file
 
 
-TEST_FILE = "test_cacheData"
+TEST_FILE = "test__cache_data"
 
 
 def cleanup_file():
@@ -23,7 +23,7 @@ def make_media_item(
     status: str | None = None,
     format_type: str | None = None,
     popularity: int | None = None,
-    averageScore: int | None = None,
+    average_score: int | None = None,
     trending: int | None = None,
     start_year: int | None = None,
 ) -> Dict[str, Any]:
@@ -46,8 +46,8 @@ def make_media_item(
         data["format"] = format_type
     if popularity is not None:
         data["popularity"] = popularity
-    if averageScore is not None:
-        data["averageScore"] = averageScore
+    if average_score is not None:
+        data["average_score"] = average_score
     if trending is not None:
         data["trending"] = trending
     if start_year is not None:
@@ -55,13 +55,13 @@ def make_media_item(
     return data
 
 
-def test_runCacheData_no_cache_returns_none():
+def test_run_cache_data_no_cache_returns_none():
     cleanup_file()
-    assert runCacheData(None, TEST_FILE) is None
-    assert runCacheData(1, TEST_FILE) is None
+    assert run_cache_data(None, TEST_FILE) is None
+    assert run_cache_data(1, TEST_FILE) is None
 
 
-def test_saveCacheData_persists_and_caps_lastPage():
+def test_save_cache_data_persists_and_caps_last_page():
     cleanup_file()
     media: List[Dict[str, Any]] = [
         make_media_item(
@@ -70,11 +70,11 @@ def test_saveCacheData_persists_and_caps_lastPage():
             extra_large="http://image.example/test.jpg",
         )
     ]
-    pageInfo = {"lastPage": 123}
+    page_info = {"lastPage": 123}
 
-    saved = saveCacheData(pageInfo, media, TEST_FILE, page=2)
-    assert saved["pageInfo"]["lastPage"] == 50
-    assert saved["pageInfo"]["currentPage"] == 2
+    saved = save_cache_data(page_info, media, TEST_FILE, page=2)
+    assert saved["page_info"]["lastPage"] == 50
+    assert saved["page_info"]["currentPage"] == 2
     assert isinstance(saved["data"], list)
     assert len(saved["data"]) == 1
 
@@ -87,17 +87,17 @@ def test_saveCacheData_persists_and_caps_lastPage():
     assert len(loaded["pages"]["2"]) == 1
 
 
-def test_runCacheData_returns_page_data():
+def test_run_cache_data_returns_page_data():
     # Should use existing cache from previous test
-    result = runCacheData(2, TEST_FILE)
+    result = run_cache_data(2, TEST_FILE)
     assert result is not None
-    assert result["pageInfo"]["lastPage"] == 50
-    assert result["pageInfo"]["currentPage"] == 2
+    assert result["page_info"]["lastPage"] == 50
+    assert result["page_info"]["currentPage"] == 2
     assert isinstance(result["data"], list)
     assert len(result["data"]) == 1
 
 
-def test_saveCacheData_appends_items_on_same_page():
+def test_save_cache_data_appends_items_on_same_page():
     media2: List[Dict[str, Any]] = [
         make_media_item(
             _id=2,
@@ -107,44 +107,44 @@ def test_saveCacheData_appends_items_on_same_page():
             status="FINISHED",
             format_type="TV",
             popularity=200,
-            averageScore=85,
+            average_score=85,
             trending=10,
             start_year=2021,
         )
     ]
-    pageInfo2 = {"lastPage": 5}
+    page_info_2 = {"lastPage": 5}
 
-    saved2 = saveCacheData(pageInfo2, media2, TEST_FILE, page=2)
-    assert saved2["pageInfo"]["lastPage"] == 5
-    assert saved2["pageInfo"]["currentPage"] == 2
+    saved2 = save_cache_data(page_info_2, media2, TEST_FILE, page=2)
+    assert saved2["page_info"]["lastPage"] == 5
+    assert saved2["page_info"]["currentPage"] == 2
 
     # Verify the page now has 2 items
     loaded = jsonLoad(TEST_FILE)
     assert len(loaded["pages"]["2"]) == 2
 
-    result = runCacheData(2, TEST_FILE)
+    result = run_cache_data(2, TEST_FILE)
     assert result is not None
     assert len(result["data"]) == 2
 
 
-def test_runCacheData_page_not_exists_returns_none():
-    assert runCacheData(3, TEST_FILE) is None
+def test_run_cache_data_page_not_exists_returns_none():
+    assert run_cache_data(3, TEST_FILE) is None
 
 
-def test_saveCacheData_structures_defaults():
+def test_save_cache_data_structures_defaults():
     # Missing many optional fields; verify defaults
     media_default: List[Dict[str, Any]] = [
         make_media_item(
             _id=99,
             title_romaji="Default Romaji",
             extra_large="http://image.example/default.jpg",
-            # No episodes/status/format/popularity/averageScore/trending/startDate provided
+            # No episodes/status/format/popularity/average_score/trending/startDate provided
         )
     ]
-    pageInfo = {"lastPage": 1}
-    saved = saveCacheData(pageInfo, media_default, TEST_FILE, page=1)
-    assert saved["pageInfo"]["lastPage"] == 1
-    assert saved["pageInfo"]["currentPage"] == 1
+    page_info = {"lastPage": 1}
+    saved = save_cache_data(page_info, media_default, TEST_FILE, page=1)
+    assert saved["page_info"]["lastPage"] == 1
+    assert saved["page_info"]["currentPage"] == 1
     assert len(saved["data"]) == 1
 
     item = saved["data"][0]
@@ -154,7 +154,7 @@ def test_saveCacheData_structures_defaults():
     assert item["status"] == "UNKNOWN"
     assert item["format"] == "TV"
     assert item["popularity"] == 0
-    assert item["averageScore"] == 0
+    assert item["average_score"] == 0
     assert item["trending"] == 0
     assert item["releaseDate"] == "Unknown"
 

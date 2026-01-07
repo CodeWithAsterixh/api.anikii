@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import httpx
 from app.helpers.fetchHelpers import make_api_request_async
 from app.queries.query_manager import query_manager
-from app.helpers.json.cacheData import runCacheData, saveCacheData
+from app.helpers.json.cacheData import run_cache_data, save_cache_data
 from app.helpers.timeFunction import this_when, get_current_season
 
 async def fetch_paged_media(
@@ -13,25 +13,25 @@ async def fetch_paged_media(
     variables: Optional[Dict[str, Any]] = None
 ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     """Generic helper to fetch paged media with caching."""
-    cached = await runCacheData(page, cache_key)
+    cached = await run_cache_data(page, cache_key)
     if cached:
-        return cached.get("pageInfo", {}), cached.get("data", [])
+        return cached.get("page_info", {}), cached.get("data", [])
 
     query = query_manager.get_query(query_category, query_name)
-    vars = variables or {}
-    vars["page"] = page
+    required_inputs = variables or {}
+    required_inputs["page"] = page
     
-    body = {"query": query, "variables": vars}
+    body = {"query": query, "variables": required_inputs}
     response = await make_api_request_async(body)
     
     if response.get("errors"):
         raise RuntimeError(response["errors"])
         
     media = response["data"]["Page"]["media"]
-    pageInfo = response["data"]["Page"]["pageInfo"]
+    page_info = response["data"]["Page"]["page_info"]
     
-    await saveCacheData(pageInfo, media, cache_key, page)
-    return pageInfo, media
+    await save_cache_data(page_info, media, cache_key, page)
+    return page_info, media
 
 async def get_popular(page: int):
     return await fetch_paged_media("popular", "get_popular_media", "popular", page)

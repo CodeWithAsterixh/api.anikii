@@ -2,6 +2,7 @@ from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 import base64
 import json
+from app.core.logger import logger
 
 def decrypt_sources(encrypted_data, decryption_key):
     try:
@@ -16,5 +17,6 @@ def decrypt_sources(encrypted_data, decryption_key):
 
         plaintext = cipher.decrypt_and_verify(ciphertext, tag)
         return json.loads(plaintext.decode("utf-8"))
-    except Exception:
+    except Exception as e:
+        logger.error(f"Decryption error: {e}")
         return []

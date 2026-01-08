@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Tuple
 from app.helpers.fetchHelpers import make_api_request_async
-from app.structure.listItem import structureAnilistArray
+from app.structure.listItem import structure_anilist_array
 from app.queries.query_manager import query_manager
 
 async def fetch_search(keyword: str) -> List[Dict[str, Any]]:
@@ -16,11 +16,11 @@ async def fetch_search(keyword: str) -> List[Dict[str, Any]]:
         raise RuntimeError(response["errors"])
 
     data = response["data"]["Page"]["media"]
-    return structureAnilistArray(data)
+    return structure_anilist_array(data)
 
 async def fetch_popular(page: int) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
     """
-    Fetch popular media pageInfo and media list from AniList.
+    Fetch popular media page_info and media list from AniList.
     """
     query = query_manager.get_query("popular", "get_popular_media")
     variables = {"page": page}
@@ -30,9 +30,9 @@ async def fetch_popular(page: int) -> Tuple[Dict[str, Any], List[Dict[str, Any]]
     if response.get("errors"):
         raise RuntimeError(response["errors"])
 
-    pageInfo = response["data"]["Page"]["pageInfo"]
+    page_info = response["data"]["Page"]["page_info"]
     media = response["data"]["Page"]["media"]
-    return pageInfo, media
+    return page_info, media
 
 async def fetch_genres() -> List[str]:
     """

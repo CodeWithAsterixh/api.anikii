@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Path, Query, Request, HTTPException
 from typing import Any, Dict, Optional
+from app.core.constants import TYPE_REGEX
 from app.services.stream_metadata_service import get_stream_data, get_episode_extra, get_anime_episodes
 from app.services.stream_resolver_service import get_episode_stream, get_episode_dub, get_external_stream
 from app.helpers.response_envelope import success_response
@@ -22,7 +23,7 @@ async def get_episode_streaming_info(
     request: Request,
     id: int = Path(..., ge=1),
     ep: int = Path(..., ge=1),
-    type: str = Query("sub", regex="^(sub|dub)$"),
+    type: str = Query("sub", pattern=TYPE_REGEX),
     provider: Optional[str] = Query(None)
 ) -> Dict[str, Any]:
     """Fetch streaming info for a specific episode."""
@@ -66,7 +67,7 @@ async def get_anime_episodes_list(
 async def get_external_streaming_info(
     request: Request,
     id: int = Path(..., ge=1),
-    type: str = Query("sub", regex="^(sub|dub)$")
+    type: str = Query("sub", pattern=TYPE_REGEX)
 ) -> Dict[str, Any]:
     """Fetch external streaming info."""
     data = await get_external_stream(id, type)

@@ -1,18 +1,19 @@
 from app.core.logger import logger
-from .collection import collection_name
+from .collection import get_collection
 from typing import Any, Dict, List
 
 
-def addToDb(fileName: str, data: Dict[str, Any] | List[Dict[str, Any]]) -> None:
+async def add_to_db(file_name: str, data: Dict[str, Any] | List[Dict[str, Any]]) -> None:
     """Insert a new document with name and data fields."""
     try:
-        collection_name.insert_one({"name": fileName, "data": data})
-        logger.info(f"Added {fileName} to database")
+        collection = get_collection()
+        await collection.insert_one({"name": file_name, "data": data})
+        logger.info(f"Added {file_name} to database")
     except Exception as e:
-        logger.error(f"Failed to add {fileName} to database: {e}")
+        logger.error(f"Failed to add {file_name} to database: {e}")
 
 
-def updateInDb(fileName: str, data: Dict[str, Any] | List[Dict[str, Any]]) -> None:
+async def update_in_db(file_name: str, data: Dict[str, Any] | List[Dict[str, Any]]) -> None:
     """
     Update the document by name.
     Strictly enforces the use of the $set operator to prevent NoSQL injection of other operators.
@@ -24,17 +25,19 @@ def updateInDb(fileName: str, data: Dict[str, Any] | List[Dict[str, Any]]) -> No
     else:
         update_doc = {"$set": {"data": data}}
 
-    collection_name.update_one(
-        {"name": fileName},
+    collection = get_collection()
+    await collection.update_one(
+        {"name": file_name},
         update_doc,
         upsert=True,
     )
-    logger.info(f"Updated {fileName} in database")
+    logger.info(f"Updated {file_name} in database")
 
 
-def findFileByName(name: str):
+async def find_file_by_name(name: str):
     """Find a single document by name."""
-    return collection_name.find_one({"name": name})
+    collection = get_collection()
+    return await collection.find_one({"name": name})
 
 
     

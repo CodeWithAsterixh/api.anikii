@@ -1,4 +1,4 @@
-from app.structure.listItem import structureAnilistItem, structureAnilistArray
+from app.structure.listItem import structure_anilist_item, structure_anilist_array
 
 
 def test_structure_item_defaults():
@@ -8,7 +8,7 @@ def test_structure_item_defaults():
         "coverImage": {"extraLarge": "http://image.example/test.jpg"},
         # Optional fields omitted to trigger defaults
     }
-    result = structureAnilistItem(input_data)
+    result = structure_anilist_item(input_data)
     assert result["id"] == 123
     assert result["title"] == "Romaji Title"
     assert result["episodes"] == 0
@@ -37,7 +37,7 @@ def test_structure_array_wraps_items():
             "startDate": {"year": 2020},
         }
     ]
-    structured = structureAnilistArray(input_list)
+    structured = structure_anilist_array(input_list)
     assert isinstance(structured, list)
     assert len(structured) == 1
     item = structured[0]

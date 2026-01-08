@@ -23,85 +23,102 @@ async def get_episode_data(id: int, ep: int, type: str = "sub"):
     """
     try:
         provider = await fetch_malsyn_data_and_get_provider(id)
-        if type == "sub":
-            gogoId = provider.get("id_provider",{}).get("idGogo", None)
-        elif type == "dub":
-            gogoId = provider.get("id_provider",{}).get("idGogoDub", None)
-        else:
-            raise HTTPException(status_code=400, detail="Invalid type parameter")
-        
-        url = f"{BASEURL}/{gogoId}-episode-{ep}"
-        
-        # Parse the streaming info from the URL.
-        if gogoId:
-            data = await parse_streaming_info(url)
-            # Build a 9anime.org.lv episode URL using the anime title slug
-            anime_title = data.anime_info.get("title") if isinstance(data.anime_info, dict) else None
-            slug = slugify_anikii(anime_title) if anime_title else None
-            nineanime_base = "https://9anime.org.lv"
-            if slug:
-                nineanime_url = (
-                    f"{nineanime_base}/{slug}-dub-episode-{ep}" if type == "dub" else f"{nineanime_base}/{slug}-episode-{ep}"
-                )
-            else:
-                nineanime_url = None
-            
-            # Get extra servers info from gogo
-            episode_extra = await get_episode(gogoId, ep)
-            extra_servers = episode_extra.get("servers", {}) if episode_extra else {}
+        gogo_id = _extract_gogo_id(provider, type)
+        if not gogo_id:
+            return None
 
-            # Post-process parsed links:
-            # - remove any with null/empty url
-            # - disable gogoanime.me.uk newplayer hd-1/hd-2 entries
-            # - ensure //vidmoly.net URLs have https prefix
-            # - strip wrapping backticks/quotes/whitespace
-            processed_links = []
-            for link in data.stream_links:
-                if isinstance(link, dict):
-                    name_val = link.get("name")
-                    url_val = link.get("url")
-                else:
-                    name_val = getattr(link, "name", None)
-                    url_val = getattr(link, "url", None)
-                # Remove null/empty
-                if not url_val:
-                    continue
-                # Normalize formatting artifacts
-                if isinstance(url_val, str):
-                    url_val = url_val.strip().strip("`").strip('"').strip("'")
-                # Ensure protocol prefix for protocol-relative URLs
-                if isinstance(url_val, str) and url_val.startswith("//"):
-                    url_val = "https:" + url_val
-                # Disable specific gogoanime hd-1/hd-2 player links and s3taku links
-                if (
-                    name_val == "anime"
-                    and isinstance(url_val, str)
-                    and (
-                        ("gogoanime.me.uk/newplayer.php" in url_val and ("type=hd-1" in url_val or "type=hd-2" in url_val))
-                        or "s3taku.com/streaming.php" in url_val
-                    )
-                ):
-                    continue
-                processed_links.append({"name": name_val, "url": url_val})
-            
-            # Build final stream_links list
-            # Use a dictionary to avoid duplicates by URL
-            final_links_dict = {link["url"]: link for link in processed_links}
-            
-            # Add extra servers from get_episode (handles new gogo structures)
-            for s_name, s_url in extra_servers.items():
-                if s_url not in final_links_dict:
-                    final_links_dict[s_url] = {"name": s_name, "url": s_url}
-            
-            stream_links = list(final_links_dict.values())
-            
-            return {
-                "anime_info":data.anime_info,
-                "episode_info":data.episode_info,
-                "stream_links":stream_links,
-            }
-        return None
+        url = f"{BASEURL}/{gogo_id}-episode-{ep}"
+        data = await parse_streaming_info(url)
+
+        extra_servers = await _fetch_extra_servers(gogo_id, ep)
+
+        processed_links = _process_stream_links(data.stream_links)
+        stream_links = _merge_servers(processed_links, extra_servers)
+
+        return {
+            "anime_info": data.anime_info,
+            "episode_info": data.episode_info,
+            "stream_links": stream_links,
+        }
+
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
+
+
+def _extract_gogo_id(provider: dict, type: str) -> str | None:
+    """Extract the appropriate gogo_id based on sub/dub type."""
+    if type == "sub":
+        return provider.get("id_provider", {}).get("idGogo")
+    elif type == "dub":
+        return provider.get("id_provider", {}).get("idGogoDub")
+    else:
+        raise HTTPException(status_code=400, detail="Invalid type parameter")
+
+
+def _build_nineanime_url(data, ep: int, type: str) -> str | None:
+    """Construct 9anime.org.lv episode URL from anime title slug."""
+    anime_title = data.anime_info.get("title") if isinstance(data.anime_info, dict) else None
+    if not anime_title:
+        return None
+    slug = slugify_anikii(anime_title)
+    base = "https://9anime.org.lv"
+    suffix = "-dub" if type == "dub" else ""
+    return f"{base}/{slug}{suffix}-episode-{ep}"
+
+
+async def _fetch_extra_servers(gogo_id: str, ep: int) -> dict:
+    """Fetch extra server data from gogo."""
+    episode_extra = await get_episode(gogo_id, ep)
+    return episode_extra.get("servers", {}) if episode_extra else {}
+
+
+def _process_stream_links(links) -> list[dict]:
+    """Clean and filter streaming links."""
+    processed = []
+    for link in links:
+        name, url = _get_name_url(link)
+        if not url:
+            continue
+        url = _normalize_url(url)
+        if _should_skip_link(name, url):
+            continue
+        processed.append({"name": name, "url": url})
+    return processed
+
+
+def _get_name_url(link):
+    """Extract name and url from link object or dict."""
+    if isinstance(link, dict):
+        return link.get("name"), link.get("url")
+    return getattr(link, "name", None), getattr(link, "url", None)
+
+
+def _normalize_url(url: str) -> str:
+    """Strip artifacts and ensure https prefix for protocol-relative URLs."""
+    url = url.strip().strip("`").strip('"').strip("'")
+    if url.startswith("//"):
+        url = "https:" + url
+    return url
+
+
+def _should_skip_link(name, url: str) -> bool:
+    """Return True if link should be excluded."""
+    return (
+        name == "anime"
+        and (
+            ("gogoanime.me.uk/newplayer.php" in url and ("type=hd-1" in url or "type=hd-2" in url))
+            or "s3taku.com/streaming.php" in url
+        )
+    )
+
+
+def _merge_servers(processed_links: list[dict], extra_servers: dict) -> list[dict]:
+    """Merge processed links with extra servers, de-duplicating by URL."""
+    final = {link["url"]: link for link in processed_links}
+    for name, url in extra_servers.items():
+        if url not in final:
+            final[url] = {"name": name, "url": url}
+    return list(final.values())
+ 

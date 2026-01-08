@@ -31,6 +31,8 @@ venv/
 /venv
 /__pycache__
 
+# analysis files
+analysiz.md
 
 .env
 # Snyk Security Extension - AI Rules (auto-generated)

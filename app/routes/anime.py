@@ -10,7 +10,7 @@ from app.services.anilist_media_service import (
 from app.services.stream_metadata_service import get_anime_episodes, get_anime_max_episodes
 from app.helpers.gogo_episodes import get_highest_episode, get_max_episodes_from_gogo
 from app.helpers.modules import fetch_malsyn_data_and_get_provider
-from app.structure.anime_details import structureAnilistDetails
+from app.structure.anime_details import structure_anilist_details
 from app.helpers.response_envelope import success_response
 from app.core.config import get_settings
 from app.core.limiter import limiter

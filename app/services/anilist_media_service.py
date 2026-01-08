@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 from app.helpers.fetchHelpers import make_api_request_async
-from app.structure.listItem import structureAnilistItem
+from app.structure.listItem import structure_anilist_item
 from app.structure.anime_details import structureAnilistRelations, structureAnilistTrailer
 from app.structure.character_details import structureAnilistCharacters
 from app.queries.query_manager import query_manager
@@ -38,7 +38,7 @@ async def fetch_trailers(id: int) -> Dict[str, Any]:
     return structureAnilistTrailer(data)
 
 async def fetch_recommended(id: int, page: int = 1) -> Dict[str, Any]:
-    """Fetch recommendations for an anime, returning pageInfo and structured items."""
+    """Fetch recommendations for an anime, returning page_info and structured items."""
     query = query_manager.get_query("recommended", "get_recommended")
     variables = {"id": id, "page": page}
     body = {"query": query, "variables": variables}
@@ -47,14 +47,14 @@ async def fetch_recommended(id: int, page: int = 1) -> Dict[str, Any]:
         raise RuntimeError(response["errors"])
     media = response["data"]["Media"]
     nodes = media["recommendations"]["nodes"]
-    pageInfo = media["recommendations"]["pageInfo"]
-    nodesArray: List[Dict[str, Any]] = []
+    page_info = media["recommendations"]["page_info"]
+    nodes_array: List[Dict[str, Any]] = []
     for node in nodes:
         rec_media = node.get("mediaRecommendation")
         if rec_media:
-            structureData = structureAnilistItem(rec_media)
-            nodesArray.append(structureData)
-    return {"pageInfo": pageInfo, "recommendations": nodesArray}
+            structure_data = structure_anilist_item(rec_media)
+            nodes_array.append(structure_data)
+    return {"page_info": page_info, "recommendations": nodes_array}
 
 async def fetch_characters(id: int) -> List[Dict[str, Any]]:
     """Fetch and structure characters for an anime."""

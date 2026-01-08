@@ -11,7 +11,7 @@ custom_provider_data = [
     # Add more entries as needed
 ]
 # Async function to process the provider data
-async def get_id_each_provider(json_data: dict, anime_id: int) -> dict:
+def get_id_each_provider(json_data: dict, anime_id: int) -> dict:
     id_gogo = ""
     id_gogo_dub = ""
     id_zoro = ""

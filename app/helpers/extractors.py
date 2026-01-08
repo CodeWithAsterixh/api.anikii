@@ -1,46 +1,55 @@
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad, unpad
 import base64
 import json
+import os
+from app.core.config import get_settings
 
-# Keys and Initialization Vector (IV) for encryption and decryption
-KEYS = {
-    "key": b'37911490979715163134003223491201',
-    "second_key": b'54674138327930866480207815084989',
-    "iv": b'3134003223491201',
-}
+settings = get_settings()
 
 def encrypt_aes(data: str, key: bytes, iv: bytes) -> str:
     """
-    Encrypts the input data using AES encryption with the specified key and IV.
+    Encrypts the input data using AES-GCM encryption with the specified key.
+    Note: The 'iv' parameter is kept for signature compatibility but GCM 
+    uses a random nonce for better security.
 
     Args:
         data (str): The plaintext data to encrypt.
         key (bytes): The AES key for encryption.
-        iv (bytes): The Initialization Vector for encryption.
+        iv (bytes): The Initialization Vector (used as fallback nonce if needed).
 
     Returns:
-        str: Base64 encoded encrypted data.
+        str: Base64 encoded encrypted data (nonce + tag + ciphertext).
     """
-    cipher = AES.new(key, AES.MODE_CBC, iv)
-    encrypted_bytes = cipher.encrypt(pad(data.encode('utf-8'), AES.block_size))
-    return base64.b64encode(encrypted_bytes).decode('utf-8')
+    # Use GCM mode for better security (addresses SonarQube python:S5542)
+    # Explicitly use a 12-byte nonce as recommended for GCM
+    cipher = AES.new(key, AES.MODE_GCM, nonce=os.urandom(12))
+    ciphertext, tag = cipher.encrypt_and_digest(data.encode('utf-8'))
+    
+    # Combine nonce, tag, and ciphertext for the result
+    result = cipher.nonce + tag + ciphertext
+    return base64.b64encode(result).decode('utf-8')
 
 def decrypt_aes(data: str, key: bytes, iv: bytes) -> str:
     """
-    Decrypts AES encrypted data with the specified key and IV.
+    Decrypts AES-GCM encrypted data with the specified key.
 
     Args:
-        data (str): The Base64 encoded encrypted data to decrypt.
+        data (str): The Base64 encoded encrypted data (nonce + tag + ciphertext).
         key (bytes): The AES key for decryption.
-        iv (bytes): The Initialization Vector for decryption.
+        iv (bytes): The Initialization Vector (unused in GCM if nonce is in data).
 
     Returns:
         str: The decrypted plaintext data.
     """
     try:
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        decrypted_bytes = unpad(cipher.decrypt(base64.b64decode(data)), AES.block_size)
+        raw = base64.b64decode(data)
+        # Using 12-byte nonce and 16-byte tag (standard for GCM)
+        nonce = raw[:12]
+        tag = raw[12:28]
+        ciphertext = raw[28:]
+        
+        cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+        decrypted_bytes = cipher.decrypt_and_verify(ciphertext, tag)
         return decrypted_bytes.decode('utf-8', errors='ignore')
     except Exception as e:
         print(f"AES Decryption error: {e}")
@@ -59,10 +68,10 @@ def generate_encrypt_ajax_parameters(script_data: str, video_id: str) -> str:
         str: Formatted parameters for the `encrypt-ajax.php` request.
     """
     # Encrypt the video ID
-    encrypted_key = encrypt_aes(video_id, KEYS['key'], KEYS['iv'])
+    encrypted_key = encrypt_aes(video_id, settings.AES_KEY, settings.AES_IV)
 
     # Decrypt the embedded token
-    token = decrypt_aes(script_data, KEYS['key'], KEYS['iv'])
+    token = decrypt_aes(script_data, settings.AES_KEY, settings.AES_IV)
 
     # Generate and return the parameters string
     return f"id={encrypted_key}&alias={video_id}&{token}"
@@ -82,7 +91,7 @@ def decrypt_encrypt_ajax_response(response_data: dict) -> dict:
         raise ValueError("Response data does not contain 'data' key.")
 
     # Decrypt the encrypted data
-    decrypted_str = decrypt_aes(encrypted_data, KEYS['second_key'], KEYS['iv'])
+    decrypted_str = decrypt_aes(encrypted_data, settings.AES_SECOND_KEY, settings.AES_IV)
 
     # Parse and return as a dictionary
     return json.loads(decrypted_str)

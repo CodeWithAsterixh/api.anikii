@@ -1,8 +1,8 @@
-from pymongo import MongoClient
+from motor.motor_asyncio import AsyncIOMotorClient
 from app.core.config import get_settings
 
 # Module-level singleton client for connection reuse and pooling
-_client: MongoClient | None = None
+_client: AsyncIOMotorClient | None = None
 
 def get_database():
     """
@@ -20,8 +20,15 @@ def get_database():
         )
 
     if _client is None:
-        _client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+        _client = AsyncIOMotorClient(uri, serverSelectionTimeoutMS=5000)
     return _client.get_database(settings.DB_NAME)
+
+def close_database():
+    """Close the MongoDB connection."""
+    global _client
+    if _client:
+        _client.close()
+        _client = None
     
     
 

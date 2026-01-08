@@ -9,7 +9,7 @@ import tempfile
 settings = get_settings()
 BASE_TMP_DIR = os.path.join(tempfile.gettempdir(), "anikii")
 
-async def verify_api_key(x_api_key: str = Header(None)):
+def verify_api_key(x_api_key: str = Header(None)):
     """Verify the API key for administrative routes."""
     if not x_api_key:
         raise HTTPException(status_code=401, detail="API Key missing")

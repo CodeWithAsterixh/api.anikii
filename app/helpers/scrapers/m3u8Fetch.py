@@ -42,12 +42,23 @@ async def get_m3u8(iframe_url: str) -> Dict:
 
         # Extract the video ID from the iframe URL
         query_params = parse_qs(parsed_url.query)
-        video_id = query_params.get("slug", [None])[0]
+        video_id = query_params.get("id", [None])[0] or query_params.get("slug", [None])[0]
         if not video_id:
             raise ValueError("Video ID not found in iframe URL.")
 
+        # Extract the encrypted token from the page
+        script_tag = soup.find("script", {"data-name": "episode"})
+        encrypted_token = script_tag.get("data-value") if script_tag else ""
+        if not encrypted_token:
+            # Fallback search for any script with data-value if the specific one is missing
+            script_tag = soup.find("script", {"data-value": True})
+            encrypted_token = script_tag.get("data-value") if script_tag else ""
+
+        if not encrypted_token:
+            raise ValueError("Encrypted token not found in the page.")
+
         # Generate encryption parameters
-        params = await generate_encrypt_ajax_parameters(soup, video_id)
+        params = await generate_encrypt_ajax_parameters(encrypted_token, video_id)
 
         # Build the encrypt-ajax.php URL
         encrypt_ajax_url = urljoin(

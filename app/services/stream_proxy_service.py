@@ -12,7 +12,7 @@ USER_AGENT = (
     "Chrome/112.0.0.0 Safari/537.36"
 )
 
-async def stream_video_content(video_url: str, referer: str, filename: str, content_type: str = "video/mp4", disable_ssl: bool = False):
+def stream_video_content(video_url: str, referer: str, file_name: str, content_type: str = "video/mp4", disable_ssl: bool = False):
     """Helper for StreamingResponse to proxy video content with proper connection management."""
     if not is_safe_url(video_url):
         logger.warning(f"Blocked unsafe stream URL: {video_url}")
@@ -38,5 +38,5 @@ async def stream_video_content(video_url: str, referer: str, filename: str, cont
     return StreamingResponse(
         generate_chunks(),
         media_type=content_type,
-        headers={"Content-Disposition": f"attachment; filename={filename}.mp4"}
+        headers={"Content-Disposition": f"attachment; file_name={file_name}.mp4"}
     )

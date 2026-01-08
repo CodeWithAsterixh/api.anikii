@@ -23,23 +23,23 @@ router = APIRouter(prefix="/anime", tags=["anime"])
 async def get_anime_info(request: Request, id: int = Path(..., ge=1)) -> Dict[str, Any]:
     """Fetch basic anime details."""
     data = await fetch_anime_details(id)
-    idSub = await fetch_malsyn_data_and_get_provider(data["id"])
+    id_sub = await fetch_malsyn_data_and_get_provider(data["id"])
     
     # Scrape total episodes from GogoAnime using the unified tool
     total_episodes = await get_anime_max_episodes(id)
     if total_episodes == 0:
         total_episodes = data.get("episodes", 0)
     
-    detailsData = structureAnilistDetails({"data": data, "idSub": idSub})
+    details_data = structureAnilistDetails({"data": data, "id_sub": id_sub})
     
     # Replace the current episode value (total length)
     
-    detailsData = {
-        **detailsData,
+    details_data = {
+        **details_data,
         "episodes":total_episodes
     }
     
-    return success_response(request, data=detailsData)
+    return success_response(request, data=details_data)
 
 @router.get("/{id}/relations")
 @limiter.limit(settings.DEFAULT_RATE_LIMIT)

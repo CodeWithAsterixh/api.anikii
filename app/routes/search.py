@@ -12,6 +12,6 @@ router = APIRouter()
 @router.get("/search")
 @limiter.limit(settings.DEFAULT_RATE_LIMIT)
 async def search(request: Request, keyword: str = Query(..., min_length=1, max_length=100)) -> Dict[str, Any]:
-    structuredData = await fetch_search(keyword)
-    meta = {"search": {"keyword": keyword, "count": len(structuredData)}}
-    return success_response(request, data=structuredData, meta=meta)
+    structured_data = await fetch_search(keyword)
+    meta = {"search": {"keyword": keyword, "count": len(structured_data)}}
+    return success_response(request, data=structured_data, meta=meta)

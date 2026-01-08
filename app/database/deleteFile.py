@@ -1,17 +1,17 @@
 from .collection import get_collection
 
 
-async def delete_from_db(fileName: str) -> None:
+async def delete_from_db(file_name: str) -> None:
     """Delete a single document by name from the database."""
     collection = get_collection()
-    await collection.delete_one({"name": fileName})
+    await collection.delete_one({"name": file_name})
 
 
-# Backward-compatible alias for existing code that might still call DeleteDb
+# Backward-compatible alias for existing code that might still call delete_db
 # Remove after all imports/usages are updated
 
-async def DeleteDb(fileName: str) -> None:  # noqa: N802 (keep legacy name)
-    await delete_from_db(fileName)
+async def delete_db(file_name: str) -> None:  # noqa: N802 (keep legacy name)
+    await delete_from_db(file_name)
     
     
 

@@ -1,8 +1,8 @@
 from typing import Any, Dict, List
 from app.helpers.fetchHelpers import make_api_request_async
 from app.structure.listItem import structure_anilist_item
-from app.structure.anime_details import structureAnilistRelations, structureAnilistTrailer
-from app.structure.character_details import structureAnilistCharacters
+from app.structure.anime_details import structure_anilist_relations, structure_anilist_trailer
+from app.structure.character_details import structure_anilist_characters
 from app.queries.query_manager import query_manager
 
 async def fetch_anime_details(id: int) -> Dict[str, Any]:
@@ -24,7 +24,7 @@ async def fetch_anime_relations(id: int) -> List[Dict[str, Any]]:
     if response.get("errors"):
         raise RuntimeError(response["errors"])
     data = response["data"]["Media"]
-    return structureAnilistRelations({"data": data})
+    return structure_anilist_relations({"data": data})
 
 async def fetch_trailers(id: int) -> Dict[str, Any]:
     """Fetch and structure trailer info for a given anime id."""
@@ -35,7 +35,7 @@ async def fetch_trailers(id: int) -> Dict[str, Any]:
     if response.get("errors"):
         raise RuntimeError(response["errors"])
     data = response["data"]["Media"]
-    return structureAnilistTrailer(data)
+    return structure_anilist_trailer(data)
 
 async def fetch_recommended(id: int, page: int = 1) -> Dict[str, Any]:
     """Fetch recommendations for an anime, returning page_info and structured items."""
@@ -65,4 +65,4 @@ async def fetch_characters(id: int) -> List[Dict[str, Any]]:
     if response.get("errors"):
         raise RuntimeError(response["errors"])
     edges = response["data"]["Media"]["characters"]["edges"]
-    return structureAnilistCharacters(edges)
+    return structure_anilist_characters(edges)

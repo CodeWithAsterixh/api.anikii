@@ -65,5 +65,3 @@ class QueryManager:
 
 # Example usage:
 query_manager = QueryManager()
-# query = query_manager.get_query("characters", "get_characters")
-# print(query)

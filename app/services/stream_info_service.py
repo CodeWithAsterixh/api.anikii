@@ -19,7 +19,7 @@ async def get_stream_data(id: int) -> Dict[str, Any]:
         raise RuntimeError(response["errors"])
     return response["data"]["Media"]
 
-async def get_episode_stream(id: int, ep: int, type: str = "sub", provider: Optional[str] = None) -> Dict[str, Any]:
+async def get_episode_stream(id: int, ep: int, type: str = "sub") -> Dict[str, Any]:
     """Resolve streaming info for an episode."""
     episode_data = await get_episode_data(id, ep, type)
     if not episode_data:
@@ -28,13 +28,13 @@ async def get_episode_stream(id: int, ep: int, type: str = "sub", provider: Opti
 
 async def get_episode_dub(id: int, ep: int) -> Dict[str, Any]:
     """Fetch dub streaming info."""
-    idSub = await fetch_malsyn_data_and_get_provider(id)
-    gogoDub = idSub["id_provider"].get("idGogoDub")
-    if not gogoDub:
+    id_sub = await fetch_malsyn_data_and_get_provider(id)
+    gogo_dub = id_sub["id_provider"].get("idGogoDub")
+    if not gogo_dub:
          return {"error": "Dub ID not found", "episode": ep}
-    urlDub = f"{BASEURL}/{gogoDub}-episode-{ep}"
+    url_dub = f"{BASEURL}/{gogo_dub}-episode-{ep}"
     try:
-        return await parse_streaming_info(urlDub)
+        return await parse_streaming_info(url_dub)
     except Exception:
         return {"error": "Dub episode not found", "episode": ep}
 
@@ -55,12 +55,12 @@ async def get_episode_extra(id: int, ep: int) -> Dict[str, Any]:
         title = data["streamingEpisodes"][index].get("title", "")
         thumbnail = data["streamingEpisodes"][index].get("thumbnail", "")
     
-    idSub = await fetch_malsyn_data_and_get_provider(id)
-    gogoId = idSub.get("id_provider", {}).get("idGogo")
-    gogoIdDub = idSub.get("id_provider", {}).get("idGogoDub")
+    id_sub = await fetch_malsyn_data_and_get_provider(id)
+    gogo_id = id_sub.get("id_provider", {}).get("idGogo")
+    gogoid_dub = id_sub.get("id_provider", {}).get("idGogoDub")
     
-    episode_sub = await get_episode(gogoId, ep) if gogoId else {}
-    episode_dub = await get_episode(gogoIdDub, ep) if gogoIdDub else {}
+    episode_sub = await get_episode(gogo_id, ep) if gogo_id else {}
+    episode_dub = await get_episode(gogoid_dub, ep) if gogoid_dub else {}
     
     # Scrape total episodes from GogoAnime using the unified tool
     total_episodes = await get_anime_max_episodes(id)
@@ -85,14 +85,14 @@ async def get_episode_extra(id: int, ep: int) -> Dict[str, Any]:
         }
     }
 
-async def get_external_stream(id: int, type: str = "sub") -> Dict[str, Any]:
+async def get_external_stream(id: int) -> Dict[str, Any]:
     """Fetch external streaming info for the first episode."""
-    idSub = await fetch_malsyn_data_and_get_provider(id)
-    gogoSub = idSub["id_provider"].get("idGogo")
-    if not gogoSub:
+    id_sub = await fetch_malsyn_data_and_get_provider(id)
+    gogo_sub = id_sub["id_provider"].get("idGogo")
+    if not gogo_sub:
          return {"error": "Gogo ID not found", "episode": 1}
-    urlSub = f"{BASEURL}/{gogoSub}-episode-1"
+    url_sub = f"{BASEURL}/{gogo_sub}-episode-1"
     try:
-        return await parse_streaming_info(urlSub)
+        return await parse_streaming_info(url_sub)
     except Exception:
         return {"error": "Sub episode not found", "episode": 1}

@@ -20,6 +20,104 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
 )
 
+def _format_episode_url(base_url: str, id: str, ep: str) -> str:
+    """Formats the episode URL based on the provider."""
+    if "www14.gogoanimes.fi" in base_url or "anitaku" in base_url:
+        formatted_id = f"{id}-episode-{ep}"
+    elif "gogoanime.co.at" in base_url:
+        if "dub" not in id.lower():
+            formatted_id = f"{id}-episode-{ep}-english-subbed/"
+        else:
+            formatted_id = f"{id}-episode-{ep}"
+    else:
+        formatted_id = f"{id}-episode-{ep}"
+    
+    return urljoin(base_url, formatted_id)
+
+
+def _get_server_name(anchor, server_item=None) -> str:
+    """Extracts server name from anchor or fallback to server item classes."""
+    server_name = _extract_from_children(anchor)
+    if not server_name:
+        server_name = _extract_from_anchor_text(anchor)
+    if not server_name and server_item:
+        server_name = _extract_from_server_item(server_item)
+    return server_name or "Unknown"
+
+
+def _extract_from_children(anchor):
+    for child in anchor.children:
+        if hasattr(child, 'name') and child.name not in ["span", "i"]:
+            text = child.get_text(strip=True)
+            if text:
+                return text
+    return ""
+
+
+def _extract_from_anchor_text(anchor):
+    text = anchor.find(text=True, recursive=False)
+    return text.strip() if text else ""
+
+
+def _extract_from_server_item(server_item):
+    classes = server_item.get("class", [])
+    return classes[0] if classes and classes[0] != "anime" else "Unknown"
+
+def _extract_servers(soup: BeautifulSoup):
+    """Scrapes server list with grouping (SUB/DUB/HSUB)."""
+    servers = {}
+    grouped_servers = {"SUB": {}, "DUB": {}, "HSUB": {}}
+
+    server_sections = soup.select("div.server-items")
+    if server_sections:
+        _process_server_sections(server_sections, grouped_servers, servers)
+    else:
+        _process_legacy_servers(soup, grouped_servers, servers)
+
+    return servers, grouped_servers
+
+
+def _process_server_sections(server_sections, grouped_servers, servers):
+    """Process modern server sections."""
+    for section in server_sections:
+        data_type = section.get("data-type", "SUB").upper()
+        if data_type not in grouped_servers:
+            grouped_servers[data_type] = {}
+
+        for server in section.select("ul.muti_link li.server"):
+            anchor = server.find("a")
+            if not anchor or not anchor.has_attr("data-video"):
+                continue
+
+            video_url = _normalize_video_url(anchor["data-video"])
+            server_name = _get_server_name(anchor)
+
+            grouped_servers[data_type][server_name] = video_url
+            if server_name not in servers:
+                servers[server_name] = video_url
+
+
+def _process_legacy_servers(soup, grouped_servers, servers):
+    """Process legacy server list."""
+    server_list = soup.select("div.anime_muti_link ul li, ul.muti_link li")
+    for server in server_list:
+        anchor = server.find("a")
+        if not anchor or not anchor.has_attr("data-video"):
+            continue
+
+        video_url = _normalize_video_url(anchor["data-video"])
+        server_name = _get_server_name(anchor, server)
+
+        servers[server_name] = video_url
+        grouped_servers["SUB"][server_name] = video_url
+
+
+def _normalize_video_url(url: str) -> str:
+    """Normalize video URL by adding https: if needed."""
+    return f"https:{url}" if url.startswith("//") else url
+    
+
+
 async def get_episode(id: str, ep: str) -> Optional[Dict]:
     """
     Scrapes episode data for a given anime ID, including name, episode count, streaming link, and servers.
@@ -27,7 +125,6 @@ async def get_episode(id: str, ep: str) -> Optional[Dict]:
     Args:
         id (str): The ID of the anime episode.
         ep (str): The episode number.
-        name (str): The name of the anime.
 
     Returns:
         Optional[dict]: A dictionary containing the episode's information, or None if not found.
@@ -36,136 +133,27 @@ async def get_episode(id: str, ep: str) -> Optional[Dict]:
 
     for base_url in BASE_URLS:
         try:
-            # Adjust the `id` based on the base_url
-            if "www14.gogoanimes.fi" in base_url:
-                print(id)
-                # If base URL is www14.gogoanimes.fi, use the slug as provided
-                # The id passed here is already a slug from romaji title (from fetch_malsyn_data_and_get_provider)
-                formatted_id = f"{id}-episode-{ep}"
-            elif "anitaku" in base_url:
-                # If base URL is anitaku.bz, format id as "{id}-episode-{ep}"
-                formatted_id = f"{id}-episode-{ep}"
-            elif "gogoanime.co.at" in base_url:
-                # If base URL is gogoanime.co.at, format id as "{id}-episode-{ep}-english-subbed"
-                if "dub" not in id.lower():  # If it's not a dub, assume it's sub
-                    formatted_id = f"{id}-episode-{ep}-english-subbed/"
-                else:
-                    formatted_id = f"{id}-episode-{ep}"
-            else:
-                # Default format for other base URLs (if needed)
-                formatted_id = f"{id}-episode-{ep}"
+            link = _format_episode_url(base_url, id, ep)
 
-            # Construct the episode link
-            link = urljoin(base_url, formatted_id)
-
-            # Fetch the page asynchronously
             async with httpx.AsyncClient() as client:
                 response = await client.get(link, headers=headers)
                 if response.status_code != 200:
-                    print(f"Failed to fetch {link}: {response.status_code}")
                     continue
 
-            html = response.text
-            soup = BeautifulSoup(html, "html.parser")
-
-            # Scrape total episode count using the unified tool
+            soup = BeautifulSoup(response.text, "html.parser")
             episode_count = await get_max_episodes_from_gogo(link, soup)
-
-            # Scrape iframe URL
-            iframe_elem = soup.select_one("div.player-embed iframe")
-            iframe_url = iframe_elem.get("src") if iframe_elem and "src" in iframe_elem.attrs else None
-
-            # Scrape server list with grouping (SUB/DUB/HSUB)
-            servers = {}
-            grouped_servers = {"SUB": {}, "DUB": {}, "HSUB": {}}
-            
-            # Find all server sections
-            server_sections = soup.select("div.server-items")
-            
-            if server_sections:
-                for section in server_sections:
-                    data_type = section.get("data-type", "SUB").upper()
-                    if data_type not in grouped_servers:
-                        grouped_servers[data_type] = {}
-                        
-                    server_list = section.select("ul.muti_link li.server")
-                    for server in server_list:
-                        anchor = server.find("a")
-                        if anchor and anchor.has_attr("data-video"):
-                            video_url = anchor["data-video"]
-                            if video_url.startswith("//"):
-                                video_url = f"https:{video_url}"
-                            
-                            server_name = ""
-                            for child in anchor.children:
-                                if hasattr(child, 'name') and child.name not in ["span", "i"]:
-                                    text = child.get_text(strip=True)
-                                    if text:
-                                        server_name = text
-                                        break
-                            
-                            if not server_name:
-                                # Fallback to first text content
-                                server_name = anchor.find(text=True, recursive=False)
-                                if server_name:
-                                    server_name = server_name.strip()
-                            
-                            if not server_name:
-                                server_name = "Unknown"
-                                
-                            grouped_servers[data_type][server_name] = video_url
-                            # Keep backward compatibility for the first/default servers list
-                            if server_name not in servers:
-                                servers[server_name] = video_url
-            else:
-                # Fallback to legacy selectors
-                server_list = soup.select("div.anime_muti_link ul li, ul.muti_link li")
-                if server_list:
-                    for server in server_list:
-                        anchor = server.find("a")
-                        if anchor and anchor.has_attr("data-video"):
-                            video_url = anchor["data-video"]
-                            if video_url.startswith("//"):
-                                video_url = f"https:{video_url}"
-
-                            server_name = ""
-                            for child in anchor.children:
-                                if hasattr(child, 'name') and child.name not in ["span", "i"]:
-                                    text = child.get_text(strip=True)
-                                    if text:
-                                        server_name = text
-                                        break
-                            
-                            if not server_name:
-                                server_classes = server.get("class", [])
-                                server_name = server_classes[0] if server_classes and server_classes[0] != "anime" else "Unknown"
-
-                            servers[server_name] = video_url
-                            # Assume legacy is SUB if not specified
-                            grouped_servers["SUB"][server_name] = video_url
+            servers, grouped_servers = _extract_servers(soup)
 
             if not servers and not any(grouped_servers.values()):
-                print(f"No servers found for {link}")
                 continue
-            # Get M3U8 stream using iframe URL
-            m3u8 = None
-            # if iframe_url:
-            #     try:
-            #         m3u8 = await get_m3u8(iframe_url)  # Ensure `get_m3u8` is async
-            #     except Exception as e:
-            #         print(f"Error fetching M3U8: {e}")
-            #         continue
-                    
 
-            # Scrape anime name
             name_elem = soup.select_one("div.anime_video_body h1")
             name = name_elem.text.replace("at gogoanime", "").strip() if name_elem else None
 
-            # Compile results
             return {
                 "name": name,
                 "episodes": episode_count,
-                "stream": m3u8,
+                "stream": None,
                 "servers": servers,
                 "grouped_servers": grouped_servers,
             }
@@ -174,6 +162,4 @@ async def get_episode(id: str, ep: str) -> Optional[Dict]:
             print(f"Error processing base URL {base_url}: {e}")
             continue
 
-    # Return None if no data found from all base URLs
-    print("No data found for the given ID across all base URLs.")
     return None

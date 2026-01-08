@@ -17,7 +17,7 @@ async def json_save(file_name: str, page: int, new_items: dict) -> dict:
     # Ensure the directory exists
     os.makedirs(BASE_TMP_DIR, exist_ok=True)
 
-    json_path = validate_safe_path(f"{file_name}.json")
+    json_path = validate_safe_path(f"{file_name}.json", 'temp')
     logger.debug(f"Saving data to {json_path}")
 
     # Load existing data if available
@@ -62,7 +62,7 @@ async def json_write(file_name: str, content):
     # Ensure the directory exists
     os.makedirs(BASE_TMP_DIR, exist_ok=True)
 
-    json_path = validate_safe_path(f"{file_name}.json")
+    json_path = validate_safe_path(f"{file_name}.json", 'temp')
     logger.debug(f"Writing content to {json_path}")
 
     # Save the updated data

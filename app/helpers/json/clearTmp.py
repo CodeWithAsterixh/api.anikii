@@ -8,7 +8,7 @@ from app.core.logger import logger
 BASE_TMP_DIR = os.path.join(tempfile.gettempdir(), "anikii")
 
 
-def clear_anikii_route(directory: str | None = None, prefix: str = "", filename_td: str = ""):
+def clear_anikii_route(directory: str | None = None, prefix: str = ""):
     """
     Deletes all files and folders in the given directory that start with the given prefix.
     Returns a list of deleted items.
@@ -26,11 +26,11 @@ def clear_anikii_route(directory: str | None = None, prefix: str = "", filename_
         logger.warning(f"Directory {directory} does not exist.")
         return []
 
-    deleted_files = []  # Store deleted filenames
+    deleted_files = []  # Store deleted file_names
 
-    for filename in os.listdir(directory):
-        if filename.startswith(prefix):  # Check if filename starts with prefix
-            file_path = validate_safe_path(filename, directory)
+    for file_name in os.listdir(directory):
+        if file_name.startswith(prefix):  # Check if file_name starts with prefix
+            file_path = validate_safe_path(file_name, directory)
             try:
                 # Remove files and symbolic links
                 if os.path.isfile(file_path) or os.path.islink(file_path):
@@ -48,11 +48,11 @@ def clear_anikii_route(directory: str | None = None, prefix: str = "", filename_
     return deleted_files  # Return list of deleted files
 
 
-def delete_specific_file(filename: str = "", directory: str | None = None):
+def delete_specific_file(file_name: str = "", directory: str | None = None):
     """
     Deletes a specific file in the given directory.
     """
-    file_path = validate_safe_path(filename, directory or BASE_TMP_DIR)
+    file_path = validate_safe_path(file_name, directory or BASE_TMP_DIR)
 
     if not os.path.exists(file_path):
         return False

@@ -11,7 +11,7 @@ query ($id: Int) {
     synonyms
     description
     season
-    seasonYear
+    season_year
     status
     type
     trailer{
@@ -33,7 +33,7 @@ query ($id: Int) {
     startDate{
       year
     }
-    nextAiringEpisode{
+    next_airing_episode{
       airingAt
       timeUntilAiring
       episode

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Path, Query, Request, HTTPException
 from typing import Optional
 from urllib.parse import urlparse
+from app.core.constants import TYPE_REGEX
 from app.services.stream_resolver_service import get_episode_stream
 from app.services.stream_proxy_service import stream_video_content
 from app.helpers.scrapers.mp4Up import getVid
@@ -16,7 +17,7 @@ async def download_episode(
     request: Request,
     id: int = Path(..., ge=1),
     ep: int = Path(..., ge=1),
-    type: str = Query("sub", regex="^(sub|dub)$")
+    type: str = Query("sub", pattern=TYPE_REGEX)
 ):
     """Proxy download for an episode via mp4upload."""
     episode_data = await get_episode_stream(id, ep, type)
@@ -39,7 +40,7 @@ async def download_episode(
             raise HTTPException(status_code=404, detail=f"Failed to extract video source from mp4upload. The link may be dead: {mp4_link}")
     
     title = episode_data.get("episode_info", {}).get("title", f"anime_{id}_ep_{ep}")
-    return await stream_video_content(video_url, mp4_link, title)
+    return stream_video_content(video_url, mp4_link, title)
 
 @router.get("/{id}/stream/ep/{ep}/download-direct")
 async def download_direct_stream(
@@ -66,9 +67,9 @@ async def download_direct_stream(
             u = urlparse(direct_link)
             if u.scheme and u.netloc:
                 referer = f"{u.scheme}://{u.netloc}/"
-        except:
+        except Exception:
             pass
-        return await stream_video_content(direct_link, referer, title, disable_ssl=disable_ssl)
+        return stream_video_content(direct_link, referer, title, disable_ssl=disable_ssl)
 
     # Fallback to mp4upload
     mp4_link = next((link["url"] for link in episode_data.get("stream_links", []) if isinstance(link, dict) and link.get("name") == "mp4upload"), None)
@@ -82,7 +83,7 @@ async def download_direct_stream(
     if not video_url:
         raise HTTPException(status_code=404, detail=f"Failed to extract video source from mp4upload: {mp4_link}")
 
-    return await stream_video_content(video_url, mp4_link, title, disable_ssl=disable_ssl)
+    return stream_video_content(video_url, mp4_link, title, disable_ssl=disable_ssl)
 
 @router.get("/{id}/stream/ep/{ep}/live")
 async def live_stream(
@@ -106,7 +107,7 @@ async def live_stream(
         if not video_url:
             raise HTTPException(status_code=404, detail=f"Failed to extract live video source: {mp4_link}")
 
-        return await stream_video_content(video_url, mp4_link, f"live_{id}_{ep}", content_type="video/mp4")
+        return stream_video_content(video_url, mp4_link, f"live_{id}_{ep}", content_type="video/mp4")
     except HTTPException as e:
         return error_response(request, status_code=e.status_code, message=e.detail)
     except Exception as e:

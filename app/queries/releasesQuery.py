@@ -8,7 +8,7 @@ query ($page: Int = 1, $season: MediaSeason, $year: Int = 2024) {
     media(
       popularity_greater: 10000,
       season: $season,
-      seasonYear: $year,
+      season_year: $year,
       type: ANIME,
       sort: [POPULARITY_DESC,TRENDING_DESC]
     ) {

@@ -35,7 +35,7 @@ async def save_tmp_to_db(name: str):
     if not name.endswith(NAME_END_JSON):
         name = f"{name}.json"
     
-    validate_safe_path(name)
+    validate_safe_path(name, "temp")
     
     available_files = get_files_with_prefix()
     if name in available_files:

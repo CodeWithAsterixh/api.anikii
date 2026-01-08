@@ -19,7 +19,7 @@ async def json_load(file_name: str, ttl: Optional[int] = None) -> dict:
         file_name: Name of the file to load (without extension)
         ttl: Optional time-to-live in seconds. If provided, file will be ignored if older than TTL.
     """
-    json_path = validate_safe_path(f"{file_name}.json")
+    json_path = validate_safe_path(f"{file_name}.json", 'temp')
     logger.debug(f"Loading data from {json_path}")
 
     if os.path.exists(json_path):
@@ -42,7 +42,7 @@ def json_load_meta(file_name: str) -> dict:
     Loads meta data from a JSON file if it exists; otherwise, returns an empty dictionary.
     """
     import time
-    json_path = validate_safe_path(f"{file_name}.json")
+    json_path = validate_safe_path(f"{file_name}.json", 'temp')
     logger.debug(f"Loading metadata from {json_path}")
 
     if os.path.exists(json_path):

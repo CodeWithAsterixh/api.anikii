@@ -1,11 +1,11 @@
 import random
 from app.helpers.base import slugify_anikii
 
-def structureAnilistDetails(dataObj: dict) -> dict:
+def structure_anilist_details(data_obj: dict) -> dict:
     # Extract necessary fields with fallback/default values
-    data = dataObj.get('data', {})
+    data = data_obj.get('data', {})
     
-    anime_id_ext = dataObj.get('idSub', {}).get("id_provider",{})
+    anime_id_ext = data_obj.get('id_sub', {}).get("id_provider",{})
     title = data.get('title', {})
     synonyms = data.get('synonyms', [])
     episodes = data.get('episodes', 0)
@@ -28,15 +28,15 @@ def structureAnilistDetails(dataObj: dict) -> dict:
     duration = data.get('duration', 0)
     release_date = data.get('startDate', {}).get('year', 'Unknown')
     season = data.get('FALL', None)
-    seasonYear = data.get('seasonYear', 0)
+    season_year = data.get('season_year', 0)
     status = data.get('status', "FINISHED")
     type_ = data.get('type', None)
     trailer = data.get('trailer', {})
-    nextAiringEpisode = data.get('nextAiringEpisode', {})
+    next_airing_episode = data.get('nextAiringEpisode', {})
     tags = data.get('tags', [])
     
     studios = data.get('studios', {}).get("edges",[])
-    studiosList = [node.get("node", {}).get("name") for node in studios if node.get("node", {}).get("name")]
+    studios_list = [node.get("node", {}).get("name") for node in studios if node.get("node", {}).get("name")]
     
     score_distribution = data.get('stats', {}).get("scoreDistribution",[])
     
@@ -50,7 +50,7 @@ def structureAnilistDetails(dataObj: dict) -> dict:
         "synonyms": synonyms,
         'description': description,
         "genres": genres,
-        "studios": studiosList,
+        "studios": studios_list,
         'episodes': episodes,
         "duration": duration,
         'status': status,
@@ -67,18 +67,18 @@ def structureAnilistDetails(dataObj: dict) -> dict:
         'releaseDate': release_date,
         'season': {
             "type": season,
-            'year': seasonYear,
+            'year': season_year,
         },
         'type': type_,
         'trailer': trailer,
-        'nextAiringEpisode': nextAiringEpisode,
+        'next_airing_episode': next_airing_episode,
         'tags': tags,
     }
 
-def structureAnilistRelations(dataObj: dict) -> list:
-    data = dataObj.get('data', {})
+def structure_anilist_relations(data_obj: dict) -> list:
+    data = data_obj.get('data', {})
     relations = data.get("relations", {}).get("edges", [])
     return [relation.get("node", {}) for relation in relations]
 
-def structureAnilistTrailer(data: dict) -> dict:
+def structure_anilist_trailer(data: dict) -> dict:
     return {'trailer': data.get('trailer', {})}

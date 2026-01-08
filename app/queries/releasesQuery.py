@@ -28,7 +28,7 @@ query ($page: Int = 1, $season: MediaSeason, $year: Int = 2024) {
       episodes
       trending
       status
-      bannerImage
+      "banner_image":bannerImage,
       startDate {
         year
       } 

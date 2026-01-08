@@ -23,7 +23,7 @@ query ($id: Int) {
         extraLarge
         color
     }
-    bannerImage
+    "banner_image":bannerImage,
     popularity
     trending
     episodes

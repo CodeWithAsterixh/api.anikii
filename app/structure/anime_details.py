@@ -12,7 +12,7 @@ def structure_anilist_details(data_obj: dict) -> dict:
     description = data.get('description', '')
     genres = data.get('genres', [])
     cover_image = data.get('coverImage', {}).get('extraLarge', '')
-    banner_image = data.get('bannerImage', '')
+    banner_image = data.get('banner_image', '')
     
     english_title = title.get('english') or ''
     romaji_title = title.get('romaji') or ''
@@ -57,7 +57,7 @@ def structure_anilist_details(data_obj: dict) -> dict:
         'coverImage': {
             "cover_image_color": cover_image_color,
             "cover_image": cover_image,
-            "bannerImage": banner_image
+            "banner_image": banner_image
         },
         'format': format_type,
         'popularity': popularity,

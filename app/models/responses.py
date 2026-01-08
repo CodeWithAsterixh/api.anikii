@@ -5,7 +5,7 @@ from pydantic import BaseModel
 class CoverImageModel(BaseModel):
     cover_image_color: str
     cover_image: str
-    bannerImage: str
+    banner_image: str
 
 
 class AnimeItem(BaseModel):

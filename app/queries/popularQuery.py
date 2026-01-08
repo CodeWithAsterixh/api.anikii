@@ -21,7 +21,7 @@ query ($page: Int = 1) {
             averageScore
             episodes
             trending
-            bannerImage
+            "banner_image":bannerImage,
             startDate {
                 year
             }

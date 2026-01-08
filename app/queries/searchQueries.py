@@ -17,7 +17,7 @@ query ($search: String!) {
         averageScore
         episodes
         trending
-        bannerImage
+        "banner_image":bannerImage,
         startDate {
             year
         }

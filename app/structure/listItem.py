@@ -11,7 +11,7 @@ def structure_anilist_item(data:dict)->dict:
         status = data.get('status') or 'UNKNOWN'
         cover_image_obj = data.get('coverImage') or {}
         cover_image = cover_image_obj.get('extraLarge') or ''  # Default empty string
-        banner_image = data.get('bannerImage') or ''  # Default empty string
+        banner_image = data.get('banner_image') or ''  # Default empty string
         
         # Cover Image: Use color if available, or generate a random color
         color_val = cover_image_obj.get('color')
@@ -39,7 +39,7 @@ def structure_anilist_item(data:dict)->dict:
             'coverImage': {
                 "cover_image_color": cover_image_color,
                 "cover_image": cover_image,
-                "bannerImage": banner_image
+                "banner_image": banner_image
             },
             'format': format_type,
             'popularity': popularity,
